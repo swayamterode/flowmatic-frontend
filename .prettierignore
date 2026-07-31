@@ -1,0 +1,16 @@
+# Generated build output
+.next/
+out/
+build/
+next-env.d.ts
+*.tsbuildinfo
+
+# Dependencies and lockfiles — pnpm owns the formatting here
+node_modules/
+pnpm-lock.yaml
+
+# Static assets, including minified SVG
+public/
+
+# Exported tool artifacts, kept byte-identical to what the tool produced
+flowmatic-meta-prompt.postman_collection.json

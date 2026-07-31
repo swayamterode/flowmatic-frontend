@@ -1,0 +1,13 @@
+customer_name,email,invoice_number,amount_due,due_date,status
+Elena Ruiz,elena.ruiz@brightloom.com,INV-1042,480.00,2026-06-15,overdue
+Marcus Webb,marcus.webb@webbtrading.io,INV-1043,120.50,2026-07-20,paid
+Priya Nandakumar,priya.n@meridianworks.com,INV-1044,975.00,2026-06-28,overdue
+Tomasz Kaczmarek,t.kaczmarek@northfjord.eu,INV-1045,60.00,2026-07-25,paid
+Aisha Bello,aisha.bello@delcresttech.com,INV-1046,1250.00,2026-06-30,overdue
+Jonah Lindqvist,jonah.l@fennaco.se,INV-1047,340.75,2026-07-05,overdue
+Grace Okafor,grace.okafor@palmrowlogistics.com,INV-1048,88.20,2026-07-18,paid
+Diego Alvarado,diego.alvarado@sierraforge.mx,INV-1049,610.00,2026-06-22,overdue
+Nina Petrov,nina.petrov@arcalabs.ru,INV-1050,45.00,2026-07-27,paid
+Samuel Ortiz,samuel.ortiz@brightloom.com,INV-1051,725.30,2026-06-10,overdue
+Wei Zhang,wei.zhang@lumenharbor.cn,INV-1052,199.99,2026-07-22,paid
+Fatima Haidari,fatima.h@northfjord.eu,INV-1053,540.00,2026-06-19,overdue
