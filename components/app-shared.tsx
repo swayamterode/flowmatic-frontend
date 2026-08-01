@@ -38,7 +38,7 @@ export const navGroups: SidebarNavGroup[] = [
 export const footerNavLinks: SidebarNavItem[] = [
   {
     title: "Docs",
-    path: "/docs",
+    path: "/documentation",
     icon: <BookOpenIcon />,
   },
 ];
