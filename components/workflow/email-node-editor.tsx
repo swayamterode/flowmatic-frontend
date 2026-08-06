@@ -2,7 +2,6 @@
 
 import { useId, useMemo, useRef, useState } from "react";
 import { useEdges, useNodes, useNodesData, useReactFlow } from "@xyflow/react";
-import { Mail } from "lucide-react";
 
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -15,22 +14,23 @@ import {
   type EmailData,
 } from "@/components/workflow/email-fields";
 import { InsertMenu, useTokenField } from "@/components/workflow/insert-menu";
-import { NodeEditorShell, SECTION_LABEL } from "@/components/workflow/node-editor-shell";
+import { SECTION_LABEL } from "@/components/workflow/node-editor-shell";
 import type { EmailNodeType } from "@/components/workflow/nodes/email-node";
 import type { WorkflowNode } from "@/components/workflow/types";
 import { itemFields, upstreamFields } from "@/components/workflow/upstream-fields";
 
 /*
- * The email node's config panel. Writes straight through `updateNodeData`, with no
- * draft — see the note in `ai-node-editor.tsx` for why.
+ * The email node's fields. Rendered inside the shared tab shell by
+ * `node-tab-content.tsx`, which also appends this node's run result below.
+ * Writes straight through `updateNodeData`, with no draft — see the note in
+ * `ai-node-editor.tsx` for why.
  */
 
-type EmailNodeEditorProps = {
+type EmailNodeFieldsProps = {
   nodeId: string;
-  onClose: () => void;
 };
 
-export function EmailNodeEditor({ nodeId, onClose }: EmailNodeEditorProps) {
+export function EmailNodeFields({ nodeId }: EmailNodeFieldsProps) {
   const { updateNodeData } = useReactFlow<WorkflowNode>();
 
   const node = useNodesData<EmailNodeType>(nodeId);
@@ -99,7 +99,7 @@ export function EmailNodeEditor({ nodeId, onClose }: EmailNodeEditorProps) {
   );
   const bodyField = useTokenField(bodyRef, data?.body ?? "", (next) => set({ body: next }));
 
-  // The canvas stops rendering this panel when its node goes, but a render can
+  // The canvas stops rendering this tab when its node goes, but a render can
   // still slip through in between.
   if (!data) return null;
 
@@ -113,18 +113,7 @@ export function EmailNodeEditor({ nodeId, onClose }: EmailNodeEditorProps) {
   const bodyIssue = touched.body ? requiredFieldProblem("body", data.body) : null;
 
   return (
-    <NodeEditorShell
-      Icon={Mail}
-      nodeId={nodeId}
-      title="Email"
-      onClose={onClose}
-      footer={
-        <>
-          Sent from the address configured on the server. A blank subject becomes “
-          {EMAIL_DEFAULT_SUBJECT}”.
-        </>
-      }
-    >
+    <>
       <section className="flex flex-col gap-1.5">
         <h3 className={SECTION_LABEL}>Send</h3>
         <ToggleGroup
@@ -200,7 +189,7 @@ export function EmailNodeEditor({ nodeId, onClose }: EmailNodeEditorProps) {
         </ToggleGroup>
         <p className="px-1 text-[11px] leading-snug text-muted-foreground">
           {data.sendMode === "manual"
-            ? "Nothing sends until you approve it in the run panel."
+            ? "Nothing sends until you approve it here, in this node's Result section, once the run finishes."
             : "Sends as soon as this node runs."}
         </p>
       </section>
@@ -295,6 +284,6 @@ export function EmailNodeEditor({ nodeId, onClose }: EmailNodeEditorProps) {
           </p>
         )}
       </section>
-    </NodeEditorShell>
+    </>
   );
 }
