@@ -11,19 +11,16 @@ import {
 } from "@xyflow/react";
 import { useDefaultLayout, type LayoutStorage } from "react-resizable-panels";
 import { useTheme } from "next-themes";
-import { FlaskConical, Plus } from "lucide-react";
+import { FlaskConical } from "lucide-react";
 import { toast } from "sonner";
 
 import { Button } from "@/components/ui/button";
-import { Kbd } from "@/components/ui/kbd";
 import { ResizableHandle, ResizablePanel, ResizablePanelGroup } from "@/components/ui/resizable";
 import { Spinner } from "@/components/ui/spinner";
-import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { edgeTypes } from "@/components/workflow/edge-types";
 import { EditorTargetProvider } from "@/components/workflow/editor-target";
 import { WORKFLOW_EDGE_TYPE } from "@/components/workflow/graph-ops";
 import { InsertTargetProvider, type InsertTarget } from "@/components/workflow/insert-target";
-import { hasNodeEditor, NodeEditorPanel } from "@/components/workflow/node-editor-panel";
 import { nodeTypes } from "@/components/workflow/node-types";
 import {
   findCatalogItem,
@@ -31,9 +28,14 @@ import {
   STICKY_NOTE_ITEM,
   type NodeCatalogItem,
 } from "@/components/workflow/node-catalog";
-import { NodesPanel } from "@/components/workflow/nodes-panel";
+import {
+  isSameTab,
+  NodeRail,
+  RAIL_WIDTH,
+  type TabSelection,
+} from "@/components/workflow/node-rail";
+import { NodeTabContent } from "@/components/workflow/node-tab-content";
 import type { NodeAction } from "@/components/workflow/nodes/manual-trigger-node";
-import { RunPanel } from "@/components/workflow/run-panel";
 import { RunStatusProvider } from "@/components/workflow/run-status";
 import type { WorkflowNode } from "@/components/workflow/types";
 import { useWorkflowNodes } from "@/components/workflow/use-workflow-nodes";
@@ -55,24 +57,8 @@ const PENDING_MESSAGES: Record<Exclude<NodeAction, "execute">, string> = {
 };
 
 const SPACER_PANEL_ID = "workflow-canvas-spacer";
-const NODES_PANEL_ID = "workflow-nodes-panel";
-const EDITOR_PANEL_ID = "workflow-node-editor-panel";
-const RUN_PANEL_ID = "workflow-run-panel";
-const NODES_OVERLAY_PANEL_IDS = [SPACER_PANEL_ID, NODES_PANEL_ID];
-const EDITOR_OVERLAY_PANEL_IDS = [SPACER_PANEL_ID, EDITOR_PANEL_ID];
-const RUN_OVERLAY_PANEL_IDS = [SPACER_PANEL_ID, RUN_PANEL_ID];
-
-/*
- * What currently occupies the right-hand overlay. The nodes catalog, a node's config
- * panel and the run log all want the same strip of screen, so one state rather than a
- * flag each makes "never two at once" structural instead of a rule to remember.
- *
- * `nodeEditor` is deliberately not one kind per node type — the panel it opens
- * dispatches on the node itself, so a new configurable node type adds a case there
- * rather than a member here.
- */
-type RightPanel =
-  { kind: "nodes" } | { kind: "nodeEditor"; nodeId: string } | { kind: "run" } | null;
+const TAB_PANEL_ID = "workflow-tab-panel";
+const TAB_OVERLAY_PANEL_IDS = [SPACER_PANEL_ID, TAB_PANEL_ID];
 
 const layoutStorage: LayoutStorage = {
   getItem: (key) => {
@@ -103,23 +89,21 @@ function WorkflowEditor({ workflow, onExecute, onNodeAction }: WorkflowCanvasPro
   const [loaded] = useState(() => (workflow ? fromGraph(workflow.graph) : null));
 
   const paneRef = useRef<HTMLDivElement>(null);
-  const nodesPanelRef = useRef<HTMLDivElement | null>(null);
-  const editorPanelRef = useRef<HTMLDivElement | null>(null);
-  const runPanelRef = useRef<HTMLDivElement | null>(null);
-  const [rightPanel, setRightPanel] = useState<RightPanel>(null);
+  const tabPanelRef = useRef<HTMLDivElement | null>(null);
+  const [selectedTab, setSelectedTab] = useState<TabSelection>(null);
 
   const [insertTarget, setInsertTarget] = useState<InsertTarget | null>(null);
 
   /*
-   * Whichever overlay is mounted, so a node added while one is open still lands in
-   * the part of the canvas the user can see. `isConnected` is what decides, not
-   * which ref is set: a closed panel leaves its ref pointing at a detached element.
+   * The rail is a fixed width and never resizes; the slide-out panel beside it
+   * does. Together they're how many pixels of the canvas's right edge are
+   * currently covered, so "center of the canvas" means the center of what the
+   * user can actually see — a node added while a tab is open doesn't land
+   * underneath it.
    */
   const getRightPanelWidth = useCallback(() => {
-    for (const element of [nodesPanelRef.current, editorPanelRef.current, runPanelRef.current]) {
-      if (element?.isConnected) return element.offsetWidth;
-    }
-    return 0;
+    const panelWidth = tabPanelRef.current?.isConnected ? tabPanelRef.current.offsetWidth : 0;
+    return RAIL_WIDTH + panelWidth;
   }, []);
 
   const {
@@ -151,49 +135,32 @@ function WorkflowEditor({ workflow, onExecute, onNodeAction }: WorkflowCanvasPro
     passthrough: loaded?.passthrough,
   });
 
-  /*
-   * A layout per overlay, so the catalog and a config panel each remember their own
-   * width — a panel that inherited whatever the last one was resized to would look
-   * like it had drifted.
-   */
   const run = useWorkflowRun({ save });
 
-  const nodesLayout = useDefaultLayout({
-    id: "workflow-nodes-overlay",
-    panelIds: NODES_OVERLAY_PANEL_IDS,
+  const tabPanelLayout = useDefaultLayout({
+    id: "workflow-tab-panel-overlay",
+    panelIds: TAB_OVERLAY_PANEL_IDS,
     storage: layoutStorage,
   });
-
-  const editorLayout = useDefaultLayout({
-    id: "workflow-node-editor-overlay",
-    panelIds: EDITOR_OVERLAY_PANEL_IDS,
-    storage: layoutStorage,
-  });
-
-  const runLayout = useDefaultLayout({
-    id: "workflow-run-overlay",
-    panelIds: RUN_OVERLAY_PANEL_IDS,
-    storage: layoutStorage,
-  });
-
-  const toggleNodesPanel = useCallback(() => {
-    setRightPanel((current) => (current?.kind === "nodes" ? null : { kind: "nodes" }));
-    setInsertTarget(null);
-  }, []);
-
-  const closeRightPanel = useCallback(() => {
-    setRightPanel(null);
-    setInsertTarget(null);
-  }, []);
 
   const requestInsert = useCallback((target: InsertTarget) => {
     setInsertTarget(target);
-    setRightPanel({ kind: "nodes" });
+    setSelectedTab({ kind: "catalog" });
   }, []);
 
   const requestEditor = useCallback((nodeId: string) => {
     setInsertTarget(null);
-    setRightPanel({ kind: "nodeEditor", nodeId });
+    setSelectedTab({ kind: "node", nodeId });
+  }, []);
+
+  const handleRailSelect = useCallback((tab: TabSelection) => {
+    setInsertTarget(null);
+    setSelectedTab((current) => (isSameTab(current, tab) ? null : tab));
+  }, []);
+
+  const closeRightPanel = useCallback(() => {
+    setSelectedTab(null);
+    setInsertTarget(null);
   }, []);
 
   const addNote = useCallback(
@@ -215,7 +182,7 @@ function WorkflowEditor({ workflow, onExecute, onNodeAction }: WorkflowCanvasPro
 
       if (key === "n") {
         event.preventDefault();
-        toggleNodesPanel();
+        handleRailSelect({ kind: "catalog" });
         return;
       }
 
@@ -224,7 +191,7 @@ function WorkflowEditor({ workflow, onExecute, onNodeAction }: WorkflowCanvasPro
 
     window.addEventListener("keydown", onKeyDown);
     return () => window.removeEventListener("keydown", onKeyDown);
-  }, [addNote, closeRightPanel, toggleNodesPanel]);
+  }, [addNote, closeRightPanel, handleRailSelect]);
 
   const handleDoubleClick = useCallback(
     (event: React.MouseEvent<HTMLDivElement>) => {
@@ -234,8 +201,8 @@ function WorkflowEditor({ workflow, onExecute, onNodeAction }: WorkflowCanvasPro
     [addItemAtScreenPoint],
   );
 
-  const isOverNodesPanel = useCallback(
-    (target: EventTarget | null) => !!nodesPanelRef.current?.contains(target as Node),
+  const isOverTabPanel = useCallback(
+    (target: EventTarget | null) => !!tabPanelRef.current?.contains(target as Node),
     [],
   );
   const isStrayFileDrag = useCallback(
@@ -251,11 +218,11 @@ function WorkflowEditor({ workflow, onExecute, onNodeAction }: WorkflowCanvasPro
         return;
       }
       if (!event.dataTransfer.types.includes(NODE_DRAG_MIME)) return;
-      if (isOverNodesPanel(event.target)) return;
+      if (isOverTabPanel(event.target)) return;
       event.preventDefault();
       event.dataTransfer.dropEffect = "copy";
     },
-    [isOverNodesPanel, isStrayFileDrag],
+    [isOverTabPanel, isStrayFileDrag],
   );
 
   const handleDrop = useCallback(
@@ -265,14 +232,14 @@ function WorkflowEditor({ workflow, onExecute, onNodeAction }: WorkflowCanvasPro
         return;
       }
       const key = event.dataTransfer.getData(NODE_DRAG_MIME);
-      if (!key || isOverNodesPanel(event.target)) return;
+      if (!key || isOverTabPanel(event.target)) return;
       event.preventDefault();
       const item = findCatalogItem(key);
       if (!item) return;
       setInsertTarget(null);
       addItemAtScreenPoint(item, event.clientX, event.clientY);
     },
-    [addItemAtScreenPoint, isOverNodesPanel, isStrayFileDrag],
+    [addItemAtScreenPoint, isOverTabPanel, isStrayFileDrag],
   );
 
   const handlePanelAdd = useCallback(
@@ -289,17 +256,21 @@ function WorkflowEditor({ workflow, onExecute, onNodeAction }: WorkflowCanvasPro
       if (!placed) addItemAtPaneCenter(item);
 
       setInsertTarget(null);
-      setRightPanel(null);
+      setSelectedTab(null);
     },
     [addItemAtPaneCenter, appendItemAfterNode, insertItemOnEdge, insertTarget],
   );
 
   const handleExecute = useCallback(() => {
     if (onExecute) return onExecute();
-    // The panel opens first so the run is visible from the moment it is queued,
-    // rather than appearing once something has already happened.
+    /*
+     * A tab already open stays open — editing a node and hitting Execute keeps
+     * watching that node's own result stream in, rather than being knocked onto
+     * the Run tab. Only opens Run when nothing was open, so progress is visible
+     * from the moment it's queued.
+     */
     setInsertTarget(null);
-    setRightPanel({ kind: "run" });
+    setSelectedTab((current) => current ?? { kind: "run" });
     void run.start();
   }, [onExecute, run]);
 
@@ -335,15 +306,14 @@ function WorkflowEditor({ workflow, onExecute, onNodeAction }: WorkflowCanvasPro
 
   /*
    * Derived rather than cleaned up in an effect: a node can be deleted from under
-   * an open panel — by the keyboard, a marquee, or its own toolbar — and reading the
-   * live node list means the panel is gone in the same render as the node, with no
-   * frame in between showing an editor for something that no longer exists.
+   * an open tab — by the keyboard, a marquee, or its own toolbar — and reading the
+   * live node list means the tab is gone in the same render as the node, with no
+   * frame in between showing a panel for something that no longer exists.
    */
-  const editorNodeId =
-    rightPanel?.kind === "nodeEditor" &&
-    nodes.some((node) => node.id === rightPanel.nodeId && hasNodeEditor(node))
-      ? rightPanel.nodeId
-      : null;
+  const validSelectedTab: TabSelection =
+    selectedTab?.kind === "node" && !nodes.some((node) => node.id === selectedTab.nodeId)
+      ? null
+      : selectedTab;
 
   return (
     <InsertTargetProvider value={requestInsert}>
@@ -390,32 +360,6 @@ function WorkflowEditor({ workflow, onExecute, onNodeAction }: WorkflowCanvasPro
                 />
               </Panel>
 
-              {!rightPanel && (
-                <Panel position="top-right" className="my-3 px-2">
-                  <Tooltip>
-                    <TooltipTrigger
-                      render={
-                        <Button
-                          aria-expanded={false}
-                          aria-keyshortcuts="N"
-                          aria-label="Open nodes panel"
-                          size="icon"
-                          variant="outline"
-                          className="bg-card shadow-xs"
-                          onClick={toggleNodesPanel}
-                        />
-                      }
-                    >
-                      <Plus />
-                    </TooltipTrigger>
-                    <TooltipContent side="left">
-                      Open nodes panel
-                      <Kbd>N</Kbd>
-                    </TooltipContent>
-                  </Tooltip>
-                </Panel>
-              )}
-
               <Panel position="bottom-center" className="mb-6 flex items-center gap-2">
                 <Button
                   className="h-9 gap-2 bg-brand px-4 text-brand-foreground shadow-xs hover:bg-brand/90 dark:text-white"
@@ -429,100 +373,56 @@ function WorkflowEditor({ workflow, onExecute, onNodeAction }: WorkflowCanvasPro
             </ReactFlow>
 
             {/*
-             * Every overlay is absolutely positioned over the canvas rather than
-             * sharing the row with it: the graph keeps its size and its viewport when
-             * one opens, so nothing the user was looking at moves.
+             * The rail never moves or resizes and sits flush against the right
+             * edge; the slide-out panel (when a tab is selected) fills the flex
+             * space to its left, so closing it leaves the rail exactly where it
+             * was.
              */}
-            {rightPanel?.kind === "nodes" && (
-              <ResizablePanelGroup
-                className="pointer-events-none absolute inset-0 z-20"
-                defaultLayout={nodesLayout.defaultLayout}
-                onLayoutChanged={nodesLayout.onLayoutChanged}
-              >
-                <ResizablePanel id={SPACER_PANEL_ID} minSize="20" />
-                <ResizableHandle
-                  withHandle
-                  className="pointer-events-auto bg-transparent [&>div]:bg-muted-foreground/40"
-                />
-                <ResizablePanel
-                  elementRef={nodesPanelRef}
-                  id={NODES_PANEL_ID}
-                  className="pointer-events-auto shadow-lg"
-                  defaultSize={320}
-                  minSize={240}
-                  maxSize={480}
+            <div className="pointer-events-none absolute inset-0 z-20 flex">
+              {validSelectedTab && (
+                <ResizablePanelGroup
+                  className="flex-1"
+                  defaultLayout={tabPanelLayout.defaultLayout}
+                  onLayoutChanged={tabPanelLayout.onLayoutChanged}
                 >
-                  <NodesPanel
-                    insertMode={insertTarget !== null}
-                    onAdd={handlePanelAdd}
-                    onClose={closeRightPanel}
+                  <ResizablePanel id={SPACER_PANEL_ID} minSize="20" />
+                  <ResizableHandle
+                    withHandle
+                    className="pointer-events-auto bg-transparent [&>div]:bg-muted-foreground/40"
                   />
-                </ResizablePanel>
-              </ResizablePanelGroup>
-            )}
+                  <ResizablePanel
+                    elementRef={tabPanelRef}
+                    id={TAB_PANEL_ID}
+                    className="pointer-events-auto shadow-lg"
+                    defaultSize={400}
+                    minSize={320}
+                    maxSize={620}
+                  >
+                    <NodeTabContent
+                      selection={validSelectedTab}
+                      runId={run.detail?.runId ?? null}
+                      onNodeUpdated={run.applyNodeUpdate}
+                      onSelectNode={(nodeId) => setSelectedTab({ kind: "node", nodeId })}
+                      onClose={closeRightPanel}
+                      detail={run.detail}
+                      error={run.error}
+                      busy={run.busy}
+                      nodes={nodes}
+                      insertMode={insertTarget !== null}
+                      onAdd={handlePanelAdd}
+                    />
+                  </ResizablePanel>
+                </ResizablePanelGroup>
+              )}
 
-            {editorNodeId && (
-              <ResizablePanelGroup
-                className="pointer-events-none absolute inset-0 z-20"
-                defaultLayout={editorLayout.defaultLayout}
-                onLayoutChanged={editorLayout.onLayoutChanged}
-              >
-                <ResizablePanel id={SPACER_PANEL_ID} minSize="20" />
-                <ResizableHandle
-                  withHandle
-                  className="pointer-events-auto bg-transparent [&>div]:bg-muted-foreground/40"
-                />
-                <ResizablePanel
-                  elementRef={editorPanelRef}
-                  id={EDITOR_PANEL_ID}
-                  className="pointer-events-auto shadow-lg"
-                  defaultSize={400}
-                  minSize={320}
-                  maxSize={620}
-                >
-                  {/*
-                   * Keyed on the node, so moving between two nodes remounts the panel
-                   * rather than carrying the first one's focus and caret over.
-                   */}
-                  <NodeEditorPanel
-                    key={editorNodeId}
-                    nodeId={editorNodeId}
-                    onClose={closeRightPanel}
-                  />
-                </ResizablePanel>
-              </ResizablePanelGroup>
-            )}
-
-            {rightPanel?.kind === "run" && (
-              <ResizablePanelGroup
-                className="pointer-events-none absolute inset-0 z-20"
-                defaultLayout={runLayout.defaultLayout}
-                onLayoutChanged={runLayout.onLayoutChanged}
-              >
-                <ResizablePanel id={SPACER_PANEL_ID} minSize="20" />
-                <ResizableHandle
-                  withHandle
-                  className="pointer-events-auto bg-transparent [&>div]:bg-muted-foreground/40"
-                />
-                <ResizablePanel
-                  elementRef={runPanelRef}
-                  id={RUN_PANEL_ID}
-                  className="pointer-events-auto shadow-lg"
-                  defaultSize={400}
-                  minSize={320}
-                  maxSize={620}
-                >
-                  <RunPanel
-                    busy={run.busy}
-                    detail={run.detail}
-                    error={run.error}
-                    nodes={nodes}
-                    onClose={closeRightPanel}
-                    onNodeUpdated={run.applyNodeUpdate}
-                  />
-                </ResizablePanel>
-              </ResizablePanelGroup>
-            )}
+              <NodeRail
+                className="pointer-events-auto"
+                nodes={nodes}
+                selected={validSelectedTab}
+                busy={run.busy}
+                onSelect={handleRailSelect}
+              />
+            </div>
           </div>
         </RunStatusProvider>
       </EditorTargetProvider>
