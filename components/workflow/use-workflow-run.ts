@@ -36,6 +36,7 @@ export function useWorkflowRun({ save }: WorkflowRunOptions) {
   const [phase, setPhase] = useState<RunPhase>("idle");
   const [detail, setDetail] = useState<RunDetail | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [blocked, setBlocked] = useState(false);
 
   /*
    * Bumped by every start and by unmount. A poll loop compares the ticket it was
@@ -60,6 +61,7 @@ export function useWorkflowRun({ save }: WorkflowRunOptions) {
 
     setPhase("starting");
     setError(null);
+    setBlocked(false);
     // Cleared so the previous run's badges don't sit on the cards looking current.
     setDetail(null);
 
@@ -93,6 +95,7 @@ export function useWorkflowRun({ save }: WorkflowRunOptions) {
     } catch (cause) {
       if (mine !== ticket.current) return;
       setPhase("error");
+      setBlocked(cause instanceof RouteError && cause.status === 402);
       setError(cause instanceof RouteError ? cause.message : "Could not start that workflow.");
       return;
     }
@@ -136,6 +139,7 @@ export function useWorkflowRun({ save }: WorkflowRunOptions) {
     setPhase("idle");
     setDetail(null);
     setError(null);
+    setBlocked(false);
   }, []);
 
   /**
@@ -161,6 +165,7 @@ export function useWorkflowRun({ save }: WorkflowRunOptions) {
     phase,
     detail,
     error,
+    blocked,
     /** True while a run is being started or followed — the Execute button's state. */
     busy: phase === "starting" || phase === "polling",
   };
