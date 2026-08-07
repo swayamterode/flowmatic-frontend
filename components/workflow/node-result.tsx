@@ -5,6 +5,14 @@ import { Check, CircleSlash, Clock, Minus, Send, TriangleAlert } from "lucide-re
 
 import { Button } from "@/components/ui/button";
 import { Spinner } from "@/components/ui/spinner";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
 import { useNodeRun } from "@/components/workflow/run-status";
 import { RouteError, postRoute } from "@/lib/api/route-client";
 import { asInstant, type NodeRun, type NodeRunStatus } from "@/types/run.types";
@@ -104,6 +112,72 @@ function outputSummary(run: NodeRun): OutputSummary | null {
     messages: messages.filter(isOutputMessage),
     messagesTruncated: messagesTruncated === true,
   };
+}
+
+/** Rows a DATA_SOURCE node produces — always `Map.of("rows", rows)` on the wire. */
+type DatasourceRows = Record<string, unknown>[];
+
+const DATASOURCE_PREVIEW_ROWS = 8;
+
+/**
+ * Reads a DATA_SOURCE node's `rows` back out of the generic output map, or null if
+ * this isn't one (or the shape doesn't match) — the caller falls back to the raw
+ * JSON dump in that case.
+ */
+function datasourceRows(run: NodeRun): DatasourceRows | null {
+  if (run.nodeType !== "DATA_SOURCE" || run.output === null || typeof run.output === "string") {
+    return null;
+  }
+  const { rows } = run.output;
+  return Array.isArray(rows) ? (rows as DatasourceRows) : null;
+}
+
+function cellText(value: unknown): string {
+  if (value === null || value === undefined) return "—";
+  return typeof value === "string" ? value : JSON.stringify(value);
+}
+
+function DatasourceTable({ rows }: { rows: DatasourceRows }) {
+  if (rows.length === 0) {
+    return <p className="px-1 text-[11px] text-muted-foreground">No rows.</p>;
+  }
+
+  const columns = Object.keys(rows[0]);
+  const visible = rows.slice(0, DATASOURCE_PREVIEW_ROWS);
+
+  return (
+    <div className="flex flex-col gap-1.5">
+      <div className="nowheel max-h-64 overflow-auto rounded-md border">
+        <Table>
+          <TableHeader>
+            <TableRow>
+              {columns.map((column) => (
+                <TableHead key={column} className="h-8 text-[11px]">
+                  {column}
+                </TableHead>
+              ))}
+            </TableRow>
+          </TableHeader>
+          <TableBody>
+            {visible.map((row, index) => (
+              <TableRow key={index}>
+                {columns.map((column) => (
+                  <TableCell key={column} className="max-w-40 truncate p-2 text-[11px]">
+                    {cellText(row[column])}
+                  </TableCell>
+                ))}
+              </TableRow>
+            ))}
+          </TableBody>
+        </Table>
+      </div>
+      {rows.length > visible.length && (
+        <p className="px-1 text-[11px] text-muted-foreground">
+          Showing {visible.length} of {rows.length} rows.
+        </p>
+      )}
+    </div>
+  );
 }
 
 function MessageStatusIcon({ status }: { status: OutputMessage["status"] }) {
@@ -257,6 +331,7 @@ export function NodeResult({ nodeId, runId, onNodeUpdated }: NodeResultProps) {
   const { run } = state;
   const elapsed = duration(run);
   const summary = outputSummary(run);
+  const rows = datasourceRows(run);
 
   return (
     <div className="flex flex-col gap-1.5">
@@ -279,7 +354,9 @@ export function NodeResult({ nodeId, runId, onNodeUpdated }: NodeResultProps) {
         </pre>
       )}
 
-      {run.output !== null && summary && runId !== null && (
+      {rows && <DatasourceTable rows={rows} />}
+
+      {!rows && run.output !== null && summary && runId !== null && (
         <OutputMessages
           runId={runId}
           nodeId={run.nodeId}
@@ -288,7 +365,7 @@ export function NodeResult({ nodeId, runId, onNodeUpdated }: NodeResultProps) {
         />
       )}
 
-      {run.output !== null && !summary && (
+      {!rows && run.output !== null && !summary && (
         <pre className="nowheel max-h-40 overflow-auto rounded-md bg-muted/50 px-2 py-1.5 font-mono text-[11px] leading-relaxed whitespace-pre-wrap text-muted-foreground">
           {typeof run.output === "string" ? run.output : JSON.stringify(run.output, null, 2)}
         </pre>

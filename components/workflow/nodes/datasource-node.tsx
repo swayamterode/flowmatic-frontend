@@ -48,7 +48,7 @@ export const DATASOURCE_DEFAULT_SIZE = { width: DATASOURCE_WIDTH, height: 190 };
 
 const VISIBLE_COLUMNS = 4;
 
-function plural(count: number, word: string) {
+export function plural(count: number, word: string) {
   return `${count} ${word}${count === 1 ? "" : "s"}`;
 }
 
