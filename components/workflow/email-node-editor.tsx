@@ -2,6 +2,7 @@
 
 import { useId, useMemo, useRef, useState } from "react";
 import { useEdges, useNodes, useNodesData, useReactFlow } from "@xyflow/react";
+import { Eye, Repeat, Send, User } from "lucide-react";
 
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -128,9 +129,10 @@ export function EmailNodeFields({ nodeId }: EmailNodeFieldsProps) {
           }}
         >
           <ToggleGroupItem className="flex-1 text-[13px]" value="one">
-            A single email
+            <User data-icon="inline-start" className="size-3.5" />A single email
           </ToggleGroupItem>
           <ToggleGroupItem className="flex-1 text-[13px]" value="each">
+            <Repeat data-icon="inline-start" className="size-3.5" />
             One per item
           </ToggleGroupItem>
         </ToggleGroup>
@@ -181,9 +183,11 @@ export function EmailNodeFields({ nodeId }: EmailNodeFieldsProps) {
           onValueChange={(value) => set({ sendMode: value[0] === "manual" ? "manual" : "auto" })}
         >
           <ToggleGroupItem className="flex-1 text-[13px]" value="auto">
+            <Send data-icon="inline-start" className="size-3.5" />
             Send automatically
           </ToggleGroupItem>
           <ToggleGroupItem className="flex-1 text-[13px]" value="manual">
+            <Eye data-icon="inline-start" className="size-3.5" />
             Hold for review
           </ToggleGroupItem>
         </ToggleGroup>
