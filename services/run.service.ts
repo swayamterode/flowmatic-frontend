@@ -35,7 +35,7 @@ export const runService = {
     });
   },
 
-  /** Lifetime run count against the caller's plan limit. */
+  /** Lifetime run usage against the caller's plan limit. */
   getUsage(token: string) {
     return apiClient<WorkflowUsage>(ENDPOINTS.RUNS.USAGE, { token });
   },
