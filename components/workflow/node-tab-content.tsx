@@ -149,9 +149,12 @@ function NodeTab({ nodeId, runId, onNodeUpdated, onClose }: NodeTabProps) {
     case "manualTrigger":
       return (
         <NodeEditorShell Icon={MousePointerClick} title="Trigger" badge={nodeId} onClose={onClose}>
-          <p className="px-1 text-[13px] leading-snug text-muted-foreground">
-            Starts the workflow — nothing to configure.
-          </p>
+          <section className="flex flex-col gap-1.5">
+            <h3 className={SECTION_LABEL}>Configuration</h3>
+            <p className="px-1 text-[13px] leading-snug text-muted-foreground">
+              Starts the workflow — nothing to configure.
+            </p>
+          </section>
           <ResultSection nodeId={nodeId} runId={runId} onNodeUpdated={onNodeUpdated} />
         </NodeEditorShell>
       );
