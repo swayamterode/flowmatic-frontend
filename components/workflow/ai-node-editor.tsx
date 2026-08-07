@@ -6,7 +6,13 @@ import { Plus, X } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { NativeSelect, NativeSelectOption } from "@/components/ui/native-select";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
 import {
   AI_OUTPUT_TYPES,
@@ -189,19 +195,25 @@ export function AiNodeFields({ nodeId }: AiNodeFieldsProps) {
                       value={field.name}
                       onChange={(event) => replace({ name: event.target.value })}
                     />
-                    <NativeSelect
-                      aria-label={`Output field ${index + 1} type`}
-                      className="w-28 shrink-0"
-                      size="sm"
+                    <Select
                       value={field.type}
-                      onChange={(event) => replace({ type: event.target.value as AiOutputType })}
+                      onValueChange={(value) => replace({ type: value as AiOutputType })}
                     >
-                      {AI_OUTPUT_TYPES.map((type) => (
-                        <NativeSelectOption key={type} value={type}>
-                          {type}
-                        </NativeSelectOption>
-                      ))}
-                    </NativeSelect>
+                      <SelectTrigger
+                        aria-label={`Output field ${index + 1} type`}
+                        className="w-28 shrink-0"
+                        size="sm"
+                      >
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {AI_OUTPUT_TYPES.map((type) => (
+                          <SelectItem key={type} value={type}>
+                            {type}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
                     <Button
                       aria-label={`Remove ${field.name || `output field ${index + 1}`}`}
                       className="shrink-0 text-muted-foreground hover:text-destructive"
