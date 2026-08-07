@@ -95,7 +95,11 @@ export function useWorkflowRun({ save }: WorkflowRunOptions) {
     } catch (cause) {
       if (mine !== ticket.current) return;
       setPhase("error");
-      setBlocked(cause instanceof RouteError && cause.status === 402);
+      // A 402 means the cached usage snapshot is stale (e.g. runs made elsewhere
+      // since the last fetch), so refresh it — other failures don't imply that.
+      const isBlocked = cause instanceof RouteError && cause.status === 402;
+      setBlocked(isBlocked);
+      if (isBlocked) refreshUsage();
       setError(cause instanceof RouteError ? cause.message : "Could not start that workflow.");
       return;
     }

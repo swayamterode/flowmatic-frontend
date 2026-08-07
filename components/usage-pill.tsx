@@ -42,10 +42,8 @@ export function UsagePill() {
   if (usage.unlimited) {
     return (
       <Tooltip>
-        <TooltipTrigger>
-          <Badge variant="outline" className="text-muted-foreground">
-            Unlimited
-          </Badge>
+        <TooltipTrigger render={<Badge variant="outline" className={TONE.normal} />}>
+          Unlimited
         </TooltipTrigger>
         <TooltipContent>{planLabel(usage.plan)} plan</TooltipContent>
       </Tooltip>
@@ -53,21 +51,16 @@ export function UsagePill() {
   }
 
   const { used, limit, remaining } = usage;
-  const tone: Tone =
-    remaining === 0
-      ? "blocked"
-      : limit !== null && remaining !== null && remaining / limit <= 0.2
-        ? "low"
-        : "normal";
+  if (typeof limit !== "number" || typeof remaining !== "number") return null;
+
+  const tone: Tone = remaining <= 0 ? "blocked" : remaining / limit <= 0.2 ? "low" : "normal";
   const label = `${used} / ${limit} runs`;
 
   return (
     <Tooltip>
       {tone === "normal" ? (
-        <TooltipTrigger>
-          <Badge variant="outline" className={TONE.normal}>
-            {label}
-          </Badge>
+        <TooltipTrigger render={<Badge variant="outline" className={TONE.normal} />}>
+          {label}
         </TooltipTrigger>
       ) : (
         <TooltipTrigger render={<Link href="/pricing" />}>

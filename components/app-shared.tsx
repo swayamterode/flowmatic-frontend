@@ -1,5 +1,5 @@
 import type { ReactNode } from "react";
-import { LayoutGridIcon, WorkflowIcon, BookOpenIcon, PlusIcon } from "lucide-react";
+import { LayoutGridIcon, WorkflowIcon, BookOpenIcon, PlusIcon, CreditCardIcon } from "lucide-react";
 
 export type SidebarNavItem = {
   title: string;
@@ -49,6 +49,11 @@ export const extraNavLinks: SidebarNavItem[] = [
     title: "Create workflow",
     path: "/create-workflow",
     icon: <PlusIcon />,
+  },
+  {
+    title: "Pricing",
+    path: "/pricing",
+    icon: <CreditCardIcon />,
   },
 ];
 
