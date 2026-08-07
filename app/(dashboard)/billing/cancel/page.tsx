@@ -8,11 +8,11 @@ export default function BillingCancelPage() {
   return (
     <div className="mx-auto flex w-full max-w-md flex-col gap-6 p-4 py-16 md:p-6">
       <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <XCircle className="size-5 text-muted-foreground" />
-            Checkout canceled
-          </CardTitle>
+        <CardHeader className="gap-3">
+          <div className="flex size-10 items-center justify-center rounded-full bg-muted text-muted-foreground">
+            <XCircle className="size-5" />
+          </div>
+          <CardTitle className="font-heading text-lg">Checkout canceled</CardTitle>
           <CardDescription>
             Nothing was charged. You can pick a plan whenever you&rsquo;re ready.
           </CardDescription>

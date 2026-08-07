@@ -8,6 +8,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Spinner } from "@/components/ui/spinner";
 import { useWorkflowUsage } from "@/components/workflow-usage-provider";
+import { cn } from "@/lib/utils";
 import type { WorkflowPlan } from "@/types/usage.types";
 
 /*
@@ -58,13 +59,16 @@ export default function BillingSuccessPage() {
   return (
     <div className="mx-auto flex w-full max-w-md flex-col gap-6 p-4 py-16 md:p-6">
       <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            {confirmed ? (
-              <CheckCircle2 className="size-5 text-run-success" />
-            ) : (
-              <Spinner className="size-5" />
+        <CardHeader className="gap-3">
+          <div
+            className={cn(
+              "flex size-10 items-center justify-center rounded-full",
+              confirmed ? "bg-run-success/10 text-run-success" : "bg-muted text-muted-foreground",
             )}
+          >
+            {confirmed ? <CheckCircle2 className="size-5" /> : <Spinner className="size-5" />}
+          </div>
+          <CardTitle className="font-heading text-lg">
             {confirmed ? "You're all set" : "Confirming your payment…"}
           </CardTitle>
           <CardDescription>
