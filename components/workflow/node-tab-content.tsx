@@ -162,6 +162,7 @@ export function NodeTabContent({
 
   return (
     <NodeTab
+      key={selection.nodeId}
       nodeId={selection.nodeId}
       runId={runId}
       onNodeUpdated={onNodeUpdated}

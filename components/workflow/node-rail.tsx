@@ -157,21 +157,23 @@ export function NodeRail({ nodes, selected, busy, onSelect, className }: NodeRai
         className,
       )}
     >
-      {steps.map((node) => {
-        const total = countByType.get(node.type) ?? 1;
-        const index = (seen.get(node.type) ?? 0) + 1;
-        seen.set(node.type, index);
+      <div className="flex min-h-0 w-full flex-1 flex-col items-center gap-1 overflow-y-auto">
+        {steps.map((node) => {
+          const total = countByType.get(node.type) ?? 1;
+          const index = (seen.get(node.type) ?? 0) + 1;
+          seen.set(node.type, index);
 
-        return (
-          <RailNodeTab
-            key={node.id}
-            node={node}
-            badge={total > 1 ? index : null}
-            active={selected?.kind === "node" && selected.nodeId === node.id}
-            onSelect={() => onSelect({ kind: "node", nodeId: node.id })}
-          />
-        );
-      })}
+          return (
+            <RailNodeTab
+              key={node.id}
+              node={node}
+              badge={total > 1 ? index : null}
+              active={selected?.kind === "node" && selected.nodeId === node.id}
+              onSelect={() => onSelect({ kind: "node", nodeId: node.id })}
+            />
+          );
+        })}
+      </div>
 
       <div className="my-1 h-px w-6 shrink-0 bg-border" />
 

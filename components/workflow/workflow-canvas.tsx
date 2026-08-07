@@ -261,18 +261,32 @@ function WorkflowEditor({ workflow, onExecute, onNodeAction }: WorkflowCanvasPro
     [addItemAtPaneCenter, appendItemAfterNode, insertItemOnEdge, insertTarget],
   );
 
+  /*
+   * Derived rather than cleaned up in an effect: a node can be deleted from under
+   * an open tab — by the keyboard, a marquee, or its own toolbar — and reading the
+   * live node list means the tab is gone in the same render as the node, with no
+   * frame in between showing a panel for something that no longer exists.
+   */
+  const validSelectedTab: TabSelection =
+    selectedTab?.kind === "node" && !nodes.some((node) => node.id === selectedTab.nodeId)
+      ? null
+      : selectedTab;
+
   const handleExecute = useCallback(() => {
     if (onExecute) return onExecute();
     /*
      * A tab already open stays open — editing a node and hitting Execute keeps
      * watching that node's own result stream in, rather than being knocked onto
      * the Run tab. Only opens Run when nothing was open, so progress is visible
-     * from the moment it's queued.
+     * from the moment it's queued. Reads `validSelectedTab` (not the raw
+     * `selectedTab` state) so a tab left pointing at a since-deleted node — which
+     * `validSelectedTab` has already nulled out — doesn't get treated as "still
+     * open" here.
      */
     setInsertTarget(null);
-    setSelectedTab((current) => current ?? { kind: "run" });
+    setSelectedTab(validSelectedTab ?? { kind: "run" });
     void run.start();
-  }, [onExecute, run]);
+  }, [onExecute, run, validSelectedTab]);
 
   const handleNodeAction = useCallback(
     (action: NodeAction, nodeId: string) => {
@@ -303,17 +317,6 @@ function WorkflowEditor({ workflow, onExecute, onNodeAction }: WorkflowCanvasPro
       }),
     [nodes, handleNodeAction, handleNoteMoreOptions],
   );
-
-  /*
-   * Derived rather than cleaned up in an effect: a node can be deleted from under
-   * an open tab — by the keyboard, a marquee, or its own toolbar — and reading the
-   * live node list means the tab is gone in the same render as the node, with no
-   * frame in between showing a panel for something that no longer exists.
-   */
-  const validSelectedTab: TabSelection =
-    selectedTab?.kind === "node" && !nodes.some((node) => node.id === selectedTab.nodeId)
-      ? null
-      : selectedTab;
 
   return (
     <InsertTargetProvider value={requestInsert}>
