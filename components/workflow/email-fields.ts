@@ -23,7 +23,7 @@ export type EmailData = {
   subject: string;
   body: string;
   /**
-   * "manual" holds every resolved message in the run panel for review instead of
+   * "manual" holds every resolved message in this node's own tab for review instead of
    * sending it — see `sendMode` on `EmailOutputNodeExecutor`. "auto" (the default,
    * and today's only behavior) sends as soon as the node runs.
    */

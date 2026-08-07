@@ -41,8 +41,22 @@ export default function EmailIntegrationDocPage() {
           Ask for two output fields, not one:
         </p>
         <dl className="flex flex-col">
-          <FieldRow name="customers" value={<><Code>array</Code> — the filtered rows, each with at least a name and email.</>} />
-          <FieldRow name="messageBody" value={<><Code>string</Code> — the actual text the customer will read.</>} />
+          <FieldRow
+            name="customers"
+            value={
+              <>
+                <Code>array</Code> — the filtered rows, each with at least a name and email.
+              </>
+            }
+          />
+          <FieldRow
+            name="messageBody"
+            value={
+              <>
+                <Code>string</Code> — the actual text the customer will read.
+              </>
+            }
+          />
         </dl>
 
         <p className="text-[13px] leading-relaxed text-muted-foreground">Prompt example:</p>
@@ -63,10 +77,10 @@ export default function EmailIntegrationDocPage() {
             ✕ &ldquo;To customers who gave more than 4-star ratings, a 20% discount code SAVE30 will
             be sent.&rdquo;
           </p>
+          <p>Ask it to address the customer directly instead, and it writes the message itself:</p>
           <p>
-            Ask it to address the customer directly instead, and it writes the message itself:
+            ✓ &ldquo;Hi Alice, thanks for the great review! Enjoy 20% off with code SAVE30.&rdquo;
           </p>
-          <p>✓ &ldquo;Hi Alice, thanks for the great review! Enjoy 20% off with code SAVE30.&rdquo;</p>
         </Callout>
       </Section>
 
@@ -90,9 +104,9 @@ export default function EmailIntegrationDocPage() {
             name="Send"
             value={
               <>
-                <span className="font-medium">One per item</span> — required whenever the
-                recipient comes from a list. <span className="font-medium">A single email</span>{" "}
-                only fits a fixed, one-off recipient with no <Code>forEach</Code> at all.
+                <span className="font-medium">One per item</span> — required whenever the recipient
+                comes from a list. <span className="font-medium">A single email</span> only fits a
+                fixed, one-off recipient with no <Code>forEach</Code> at all.
               </>
             }
           />
@@ -112,10 +126,10 @@ export default function EmailIntegrationDocPage() {
               <>
                 <span className="font-medium">Send automatically</span> sends as soon as the node
                 runs. <span className="font-medium">Hold for review</span> resolves every message
-                and stops — nothing goes out until you open the run panel and click{" "}
+                and stops — nothing goes out until you open this Email node&apos;s tab and click{" "}
                 <span className="font-medium">Send</span>. Use Hold for review the first time you
-                run a new prompt; there is no way to get the resolved text back once
-                &ldquo;Send automatically&rdquo; has fired.
+                run a new prompt; there is no way to get the resolved text back once &ldquo;Send
+                automatically&rdquo; has fired.
               </>
             }
           />
@@ -128,7 +142,7 @@ export default function EmailIntegrationDocPage() {
       <Section title="3. Review before you send">
         <p className="text-[13px] leading-relaxed text-muted-foreground">
           With Delivery set to Hold for review, running the workflow leaves the Email node
-          &ldquo;awaiting review&rdquo; in the run panel: every recipient, subject and body it
+          &ldquo;awaiting review&rdquo; in its own tab: every recipient, subject and body it
           resolved, listed individually, with nothing marked sent. Read through the list — this is
           the only point where a bad prompt is cheap to catch. Once it looks right, click{" "}
           <span className="font-medium text-foreground">Send</span>.
@@ -144,8 +158,8 @@ export default function EmailIntegrationDocPage() {
             entire array as one address. It fails at send time with{" "}
             <Code>Could not parse mail</Code>. Fix: switch <span className="font-medium">Send</span>{" "}
             to <span className="font-medium">One per item</span>, move the list reference into{" "}
-            <span className="font-medium">For each</span>, and put{" "}
-            <Code>{"{{item.email}}"}</Code> back in <span className="font-medium">To</span>.
+            <span className="font-medium">For each</span>, and put <Code>{"{{item.email}}"}</Code>{" "}
+            back in <span className="font-medium">To</span>.
           </p>
         </Callout>
 
