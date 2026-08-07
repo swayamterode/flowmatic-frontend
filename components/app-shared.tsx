@@ -41,6 +41,11 @@ export const footerNavLinks: SidebarNavItem[] = [
     path: "/documentation",
     icon: <BookOpenIcon />,
   },
+  {
+    title: "Pricing",
+    path: "/pricing",
+    icon: <CreditCardIcon />,
+  },
 ];
 
 /** Reachable routes that aren't rendered in the nav tree (CTAs, detail pages). */
@@ -51,8 +56,13 @@ export const extraNavLinks: SidebarNavItem[] = [
     icon: <PlusIcon />,
   },
   {
-    title: "Pricing",
-    path: "/pricing",
+    title: "Payment confirmed",
+    path: "/billing/success",
+    icon: <CreditCardIcon />,
+  },
+  {
+    title: "Checkout canceled",
+    path: "/billing/cancel",
     icon: <CreditCardIcon />,
   },
 ];

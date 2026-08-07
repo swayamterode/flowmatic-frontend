@@ -36,5 +36,9 @@ export const ENDPOINTS = {
     /** Rewrites a rough instruction into a clean prompt. Answers `{ prompt }`. */
     META_PROMPT: "/api/ai/meta-prompt",
   },
+  BILLING: {
+    /** Starts a Stripe Checkout session for a plan. Answers `{ checkoutUrl }`. */
+    CHECKOUT_SESSION: "/api/billing/checkout-session",
+  },
   // add new modules here, grouped by domain
 } as const;

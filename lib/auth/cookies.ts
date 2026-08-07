@@ -21,7 +21,14 @@ export function sessionCookie(maxAge: number) {
   return {
     httpOnly: true,
     secure: process.env.NODE_ENV === "production",
-    sameSite: "strict",
+    /*
+     * Lax, not Strict: Stripe Checkout's return to /billing/success (and any
+     * other external-redirect callback) is a top-level GET arriving from a
+     * different site. Strict withholds the cookie on exactly that request,
+     * which reads as "signed out" to proxy.ts even though the session is
+     * fine — Lax still blocks cross-site subrequests, just not this case.
+     */
+    sameSite: "lax",
     path: "/",
     maxAge,
   } as const;
