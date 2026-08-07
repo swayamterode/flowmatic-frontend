@@ -411,6 +411,7 @@ function WorkflowEditor({ workflow, onExecute, onNodeAction }: WorkflowCanvasPro
                       onClose={closeRightPanel}
                       detail={run.detail}
                       error={run.error}
+                      blocked={run.blocked}
                       busy={run.busy}
                       nodes={nodes}
                       insertMode={insertTarget !== null}

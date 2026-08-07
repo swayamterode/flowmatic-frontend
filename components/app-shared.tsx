@@ -1,5 +1,5 @@
 import type { ReactNode } from "react";
-import { LayoutGridIcon, WorkflowIcon, BookOpenIcon, PlusIcon } from "lucide-react";
+import { LayoutGridIcon, WorkflowIcon, BookOpenIcon, PlusIcon, CreditCardIcon } from "lucide-react";
 
 export type SidebarNavItem = {
   title: string;
@@ -41,6 +41,11 @@ export const footerNavLinks: SidebarNavItem[] = [
     path: "/documentation",
     icon: <BookOpenIcon />,
   },
+  {
+    title: "Pricing",
+    path: "/pricing",
+    icon: <CreditCardIcon />,
+  },
 ];
 
 /** Reachable routes that aren't rendered in the nav tree (CTAs, detail pages). */
@@ -49,6 +54,16 @@ export const extraNavLinks: SidebarNavItem[] = [
     title: "Create workflow",
     path: "/create-workflow",
     icon: <PlusIcon />,
+  },
+  {
+    title: "Payment confirmed",
+    path: "/billing/success",
+    icon: <CreditCardIcon />,
+  },
+  {
+    title: "Checkout canceled",
+    path: "/billing/cancel",
+    icon: <CreditCardIcon />,
   },
 ];
 

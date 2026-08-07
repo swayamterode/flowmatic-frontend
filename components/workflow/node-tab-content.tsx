@@ -32,6 +32,7 @@ type NodeTabContentProps = {
   onClose: () => void;
   detail: RunDetail | null;
   error: string | null;
+  blocked: boolean;
   busy: boolean;
   nodes: WorkflowNode[];
   insertMode: boolean;
@@ -171,6 +172,7 @@ export function NodeTabContent({
   onClose,
   detail,
   error,
+  blocked,
   busy,
   nodes,
   insertMode,
@@ -191,6 +193,7 @@ export function NodeTabContent({
         <RunSummaryTab
           detail={detail}
           error={error}
+          blocked={blocked}
           busy={busy}
           nodes={nodes}
           onSelectNode={onSelectNode}

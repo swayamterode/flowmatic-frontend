@@ -7,6 +7,7 @@ import { AppBreadcrumbs } from "@/components/app-breadcrumbs";
 import { CustomSidebarTrigger } from "@/components/custom-sidebar-trigger";
 import { useActiveNavItem } from "@/hooks/use-active-nav";
 import { NavUser } from "@/components/nav-user";
+import { UsagePill } from "@/components/usage-pill";
 import { BellIcon } from "lucide-react";
 import { ModeToggle } from "./mode-toggle";
 
@@ -28,6 +29,7 @@ export function AppHeader() {
         <AppBreadcrumbs page={activeItem} />
       </div>
       <div className="flex items-center gap-3">
+        <UsagePill />
         <ModeToggle />
         <Button aria-label="Notifications" size="icon-sm" variant="outline">
           <BellIcon />

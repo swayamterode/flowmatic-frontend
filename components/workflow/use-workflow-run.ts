@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 
 import { RouteError, getRoute, postRoute } from "@/lib/api/route-client";
+import { useWorkflowUsage } from "@/components/workflow-usage-provider";
 import { isSettled, type NodeRun, type RunDetail, type RunSummary } from "@/types/run.types";
 
 /*
@@ -31,9 +32,11 @@ type WorkflowRunOptions = {
 };
 
 export function useWorkflowRun({ save }: WorkflowRunOptions) {
+  const { refresh: refreshUsage } = useWorkflowUsage();
   const [phase, setPhase] = useState<RunPhase>("idle");
   const [detail, setDetail] = useState<RunDetail | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [blocked, setBlocked] = useState(false);
 
   /*
    * Bumped by every start and by unmount. A poll loop compares the ticket it was
@@ -58,6 +61,7 @@ export function useWorkflowRun({ save }: WorkflowRunOptions) {
 
     setPhase("starting");
     setError(null);
+    setBlocked(false);
     // Cleared so the previous run's badges don't sit on the cards looking current.
     setDetail(null);
 
@@ -87,9 +91,15 @@ export function useWorkflowRun({ save }: WorkflowRunOptions) {
       if (mine !== ticket.current) return;
       setDetail({ ...queued, nodes: [] });
       setPhase("polling");
+      refreshUsage();
     } catch (cause) {
       if (mine !== ticket.current) return;
       setPhase("error");
+      // A 402 means the cached usage snapshot is stale (e.g. runs made elsewhere
+      // since the last fetch), so refresh it — other failures don't imply that.
+      const isBlocked = cause instanceof RouteError && cause.status === 402;
+      setBlocked(isBlocked);
+      if (isBlocked) refreshUsage();
       setError(cause instanceof RouteError ? cause.message : "Could not start that workflow.");
       return;
     }
@@ -125,7 +135,7 @@ export function useWorkflowRun({ save }: WorkflowRunOptions) {
         return;
       }
     }
-  }, [save]);
+  }, [save, refreshUsage]);
 
   const clear = useCallback(() => {
     ticket.current += 1;
@@ -133,6 +143,7 @@ export function useWorkflowRun({ save }: WorkflowRunOptions) {
     setPhase("idle");
     setDetail(null);
     setError(null);
+    setBlocked(false);
   }, []);
 
   /**
@@ -158,6 +169,7 @@ export function useWorkflowRun({ save }: WorkflowRunOptions) {
     phase,
     detail,
     error,
+    blocked,
     /** True while a run is being started or followed — the Execute button's state. */
     busy: phase === "starting" || phase === "polling",
   };

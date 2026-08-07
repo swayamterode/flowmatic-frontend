@@ -1,7 +1,9 @@
 "use client";
 
+import Link from "next/link";
 import { Check, Minus, TriangleAlert } from "lucide-react";
 
+import { Button } from "@/components/ui/button";
 import { Spinner } from "@/components/ui/spinner";
 import { orderedRailNodes } from "@/components/workflow/node-rail";
 import type { WorkflowNode } from "@/components/workflow/types";
@@ -55,12 +57,20 @@ function stepDuration(run: NodeRun): string | null {
 type RunSummaryTabProps = {
   detail: RunDetail | null;
   error: string | null;
+  blocked: boolean;
   busy: boolean;
   nodes: WorkflowNode[];
   onSelectNode: (nodeId: string) => void;
 };
 
-export function RunSummaryTab({ detail, error, busy, nodes, onSelectNode }: RunSummaryTabProps) {
+export function RunSummaryTab({
+  detail,
+  error,
+  blocked,
+  busy,
+  nodes,
+  onSelectNode,
+}: RunSummaryTabProps) {
   const logged = new Map((detail?.nodes ?? []).map((run) => [run.nodeId, run]));
   const steps = orderedRailNodes(nodes);
 
@@ -84,12 +94,22 @@ export function RunSummaryTab({ detail, error, busy, nodes, onSelectNode }: RunS
       )}
 
       {error && (
-        <p
+        <div
           role="alert"
-          className="rounded-lg border border-destructive/40 px-2.5 py-2 text-[12px] leading-snug text-destructive"
+          className="flex flex-col gap-2 rounded-lg border border-destructive/40 px-2.5 py-2 text-[12px] leading-snug text-destructive"
         >
-          {error}
-        </p>
+          <p>{error}</p>
+          {blocked && (
+            <Button
+              render={<Link href="/pricing" />}
+              size="sm"
+              variant="outline"
+              className="w-fit border-destructive/40 text-destructive hover:bg-destructive/10"
+            >
+              View plans
+            </Button>
+          )}
+        </div>
       )}
 
       {!detail && !error && (

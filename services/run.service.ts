@@ -1,6 +1,7 @@
 import { apiClient } from "@/lib/api/client";
 import { ENDPOINTS } from "@/lib/api/endpoints";
 import type { NodeRun, RunDetail, RunSummary } from "@/types/run.types";
+import type { WorkflowUsage } from "@/types/usage.types";
 
 /**
  * Workflow runs against Spring Boot.
@@ -32,5 +33,10 @@ export const runService = {
       method: "POST",
       token,
     });
+  },
+
+  /** Lifetime run usage against the caller's plan limit. */
+  getUsage(token: string) {
+    return apiClient<WorkflowUsage>(ENDPOINTS.RUNS.USAGE, { token });
   },
 };

@@ -29,10 +29,16 @@ export const ENDPOINTS = {
     /** Sends every message an OUTPUT node held for manual review. Answers the updated node. */
     sendNode: (runId: number | string, nodeId: string) =>
       `/api/workflows/runs/${runId}/nodes/${encodeURIComponent(nodeId)}/send`,
+    /** Lifetime run usage against the caller's plan limit. */
+    USAGE: "/api/workflows/runs/usage",
   },
   AI: {
     /** Rewrites a rough instruction into a clean prompt. Answers `{ prompt }`. */
     META_PROMPT: "/api/ai/meta-prompt",
+  },
+  BILLING: {
+    /** Starts a Stripe Checkout session for a plan. Answers `{ checkoutUrl }`. */
+    CHECKOUT_SESSION: "/api/billing/checkout-session",
   },
   // add new modules here, grouped by domain
 } as const;
