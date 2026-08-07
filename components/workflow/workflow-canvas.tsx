@@ -379,9 +379,11 @@ function WorkflowEditor({ workflow, onExecute, onNodeAction }: WorkflowCanvasPro
              * The rail never moves or resizes and sits flush against the right
              * edge; the slide-out panel (when a tab is selected) fills the flex
              * space to its left, so closing it leaves the rail exactly where it
-             * was.
+             * was. `justify-end` matters even though the rail is a flex child:
+             * with no tab open, it's the only child, and without this it would
+             * default to the row's start (the left edge) instead of the right.
              */}
-            <div className="pointer-events-none absolute inset-0 z-20 flex">
+            <div className="pointer-events-none absolute inset-0 z-20 flex justify-end">
               {validSelectedTab && (
                 <ResizablePanelGroup
                   className="flex-1"
