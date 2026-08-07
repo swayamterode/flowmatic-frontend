@@ -1,15 +1,8 @@
 "use client";
 
 import { useNodesData } from "@xyflow/react";
-import { Database, FileSpreadsheet, Mail, MousePointerClick, Play, Sparkles } from "lucide-react";
+import { Database, Mail, MousePointerClick, Play, Sparkles } from "lucide-react";
 
-import {
-  Attachment,
-  AttachmentContent,
-  AttachmentDescription,
-  AttachmentMedia,
-  AttachmentTitle,
-} from "@/components/ui/attachment";
 import { AiNodeFields } from "@/components/workflow/ai-node-editor";
 import { formatBytes } from "@/components/workflow/csv-preview";
 import { EmailNodeFields } from "@/components/workflow/email-node-editor";
@@ -18,7 +11,7 @@ import { NodeEditorShell, SECTION_LABEL } from "@/components/workflow/node-edito
 import type { NodeCatalogItem } from "@/components/workflow/node-catalog";
 import { NodeResult } from "@/components/workflow/node-result";
 import type { TabSelection } from "@/components/workflow/node-rail";
-import { plural, type DatasourceNodeType } from "@/components/workflow/nodes/datasource-node";
+import type { DatasourceNodeType } from "@/components/workflow/nodes/datasource-node";
 import { NodesPanel } from "@/components/workflow/nodes-panel";
 import { RunSummaryTab } from "@/components/workflow/run-summary-tab";
 import type { WorkflowNode } from "@/components/workflow/types";
@@ -113,29 +106,34 @@ function NodeTab({ nodeId, runId, onNodeUpdated, onClose }: NodeTabProps) {
             <h3 className={SECTION_LABEL}>File</h3>
             {file ? (
               <>
-                <Attachment size="sm">
-                  <AttachmentMedia>
-                    <FileSpreadsheet />
-                  </AttachmentMedia>
-                  <AttachmentContent>
-                    <AttachmentTitle>{file.name}</AttachmentTitle>
-                    <AttachmentDescription>
-                      {formatBytes(file.size)} · {plural(file.rowCount, "row")}
-                    </AttachmentDescription>
-                  </AttachmentContent>
-                </Attachment>
-                <ul className="flex flex-wrap gap-1">
-                  {file.columns.map((column, index) => (
-                    <li
-                      key={`${column}-${index}`}
-                      className="max-w-full truncate rounded-md border bg-muted/50 px-1.5 py-0.5 font-mono text-[11px] text-muted-foreground"
-                    >
-                      {column || "—"}
-                    </li>
-                  ))}
-                </ul>
-                <p className="px-1 text-[11px] leading-snug text-muted-foreground">
-                  Managed on the node card — drop a new CSV there to replace it.
+                <div className="grid grid-cols-3 gap-1.5">
+                  <div className="flex flex-col items-center gap-0.5 rounded-lg border bg-muted/30 px-2 py-1.5">
+                    <span className="font-mono text-sm font-semibold text-foreground">
+                      {file.rowCount}
+                    </span>
+                    <span className="text-[10px] font-medium tracking-wide text-muted-foreground uppercase">
+                      Rows
+                    </span>
+                  </div>
+                  <div className="flex flex-col items-center gap-0.5 rounded-lg border bg-muted/30 px-2 py-1.5">
+                    <span className="font-mono text-sm font-semibold text-foreground">
+                      {file.columns.length}
+                    </span>
+                    <span className="text-[10px] font-medium tracking-wide text-muted-foreground uppercase">
+                      Columns
+                    </span>
+                  </div>
+                  <div className="flex flex-col items-center gap-0.5 rounded-lg border bg-muted/30 px-2 py-1.5">
+                    <span className="font-mono text-sm font-semibold text-foreground">
+                      {formatBytes(file.size)}
+                    </span>
+                    <span className="text-[10px] font-medium tracking-wide text-muted-foreground uppercase">
+                      Size
+                    </span>
+                  </div>
+                </div>
+                <p className="truncate text-center text-[11px] text-muted-foreground">
+                  {file.name}
                 </p>
               </>
             ) : (

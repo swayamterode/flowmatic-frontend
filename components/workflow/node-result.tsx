@@ -150,7 +150,7 @@ function DatasourceTable({ rows }: { rows: DatasourceRows }) {
       <div className="nowheel max-h-64 overflow-auto rounded-md border">
         <Table>
           <TableHeader>
-            <TableRow>
+            <TableRow className="bg-muted/50">
               {columns.map((column) => (
                 <TableHead key={column} className="h-8 text-[11px]">
                   {column}
@@ -160,9 +160,9 @@ function DatasourceTable({ rows }: { rows: DatasourceRows }) {
           </TableHeader>
           <TableBody>
             {visible.map((row, index) => (
-              <TableRow key={index}>
+              <TableRow key={index} className="odd:bg-muted/20">
                 {columns.map((column) => (
-                  <TableCell key={column} className="max-w-40 truncate p-2 text-[11px]">
+                  <TableCell key={column} className="max-w-40 truncate p-2 font-mono text-[11px]">
                     {cellText(row[column])}
                   </TableCell>
                 ))}
