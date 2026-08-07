@@ -2,11 +2,17 @@
 
 import { useCallback, useId, useMemo, useRef } from "react";
 import { useEdges, useNodes, useNodesData, useReactFlow } from "@xyflow/react";
-import { Plus, Sparkles, X } from "lucide-react";
+import { Plus, X } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { NativeSelect, NativeSelectOption } from "@/components/ui/native-select";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
 import {
   AI_OUTPUT_TYPES,
@@ -16,7 +22,7 @@ import {
   type AiOutputType,
 } from "@/components/workflow/ai-fields";
 import { InsertMenu, useTokenField } from "@/components/workflow/insert-menu";
-import { NodeEditorShell, SECTION_LABEL } from "@/components/workflow/node-editor-shell";
+import { SECTION_LABEL } from "@/components/workflow/node-editor-shell";
 import type { AiNodeType } from "@/components/workflow/nodes/ai-node";
 import type { WorkflowNode } from "@/components/workflow/types";
 import { upstreamFields } from "@/components/workflow/upstream-fields";
@@ -31,7 +37,9 @@ import { useRefinePrompt } from "@/features/prompt-refine/use-refine-prompt";
 import { cn } from "@/lib/utils";
 
 /*
- * The AI node's config panel.
+ * The AI node's fields: prompt and output schema. Rendered inside the shared
+ * tab shell by `node-tab-content.tsx`, which also appends this node's run
+ * result below — see that file for why the two live in one tab.
  *
  * Every edit writes straight through `updateNodeData` — the panel keeps no draft.
  * That is the opposite of the sticky note, which buffers one, and the difference is
@@ -42,12 +50,11 @@ import { cn } from "@/lib/utils";
  * that is on screen but not yet in the graph.
  */
 
-type AiNodeEditorProps = {
+type AiNodeFieldsProps = {
   nodeId: string;
-  onClose: () => void;
 };
 
-export function AiNodeEditor({ nodeId, onClose }: AiNodeEditorProps) {
+export function AiNodeFields({ nodeId }: AiNodeFieldsProps) {
   const { updateNodeData } = useReactFlow<WorkflowNode>();
 
   const node = useNodesData<AiNodeType>(nodeId);
@@ -76,7 +83,7 @@ export function AiNodeEditor({ nodeId, onClose }: AiNodeEditorProps) {
   const promptLength = prompt.trim().length;
   const tooLongToRefine = promptLength > MESSAGE_MAX_CHARS;
 
-  // The canvas stops rendering this panel when its node goes, but a render can
+  // The canvas stops rendering this tab when its node goes, but a render can
   // still slip through in between.
   if (!node) return null;
 
@@ -84,13 +91,7 @@ export function AiNodeEditor({ nodeId, onClose }: AiNodeEditorProps) {
   const setOutput = (next: AiOutputField[]) => updateNodeData(nodeId, { output: next });
 
   return (
-    <NodeEditorShell
-      Icon={Sparkles}
-      nodeId={nodeId}
-      title="AI"
-      onClose={onClose}
-      footer="The model is configured on the server."
-    >
+    <>
       <section className="flex flex-col gap-1.5">
         <div className="flex items-center justify-between gap-2">
           <label className={SECTION_LABEL} htmlFor={promptId}>
@@ -121,8 +122,6 @@ export function AiNodeEditor({ nodeId, onClose }: AiNodeEditorProps) {
             ref={promptRef}
             aria-busy={refine.busy}
             autoFocus
-            // Its text hides while the shimmer stands in for it; the box, the height
-            // and the caret position all stay exactly as they were.
             className={cn(
               "max-h-96 min-h-40 text-[13px] leading-relaxed",
               refine.busy && "text-transparent caret-transparent select-none",
@@ -196,19 +195,25 @@ export function AiNodeEditor({ nodeId, onClose }: AiNodeEditorProps) {
                       value={field.name}
                       onChange={(event) => replace({ name: event.target.value })}
                     />
-                    <NativeSelect
-                      aria-label={`Output field ${index + 1} type`}
-                      className="w-28 shrink-0"
-                      size="sm"
+                    <Select
                       value={field.type}
-                      onChange={(event) => replace({ type: event.target.value as AiOutputType })}
+                      onValueChange={(value) => replace({ type: value as AiOutputType })}
                     >
-                      {AI_OUTPUT_TYPES.map((type) => (
-                        <NativeSelectOption key={type} value={type}>
-                          {type}
-                        </NativeSelectOption>
-                      ))}
-                    </NativeSelect>
+                      <SelectTrigger
+                        aria-label={`Output field ${index + 1} type`}
+                        className="w-28 shrink-0"
+                        size="sm"
+                      >
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {AI_OUTPUT_TYPES.map((type) => (
+                          <SelectItem key={type} value={type}>
+                            {type}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
                     <Button
                       aria-label={`Remove ${field.name || `output field ${index + 1}`}`}
                       className="shrink-0 text-muted-foreground hover:text-destructive"
@@ -234,6 +239,6 @@ export function AiNodeEditor({ nodeId, onClose }: AiNodeEditorProps) {
           Downstream nodes read these as <span className="font-mono">{`{{${nodeId}.field}}`}</span>.
         </p>
       </section>
-    </NodeEditorShell>
+    </>
   );
 }

@@ -1,38 +1,30 @@
 "use client";
 
 import { useState } from "react";
-import { Check, CircleSlash, Clock, Minus, Play, Send, TriangleAlert, X } from "lucide-react";
+import { Check, CircleSlash, Clock, Minus, Send, TriangleAlert } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import { Spinner } from "@/components/ui/spinner";
-import type { WorkflowNode } from "@/components/workflow/types";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
+import { useNodeRun } from "@/components/workflow/run-status";
 import { RouteError, postRoute } from "@/lib/api/route-client";
-import { asInstant, type NodeRun, type NodeRunStatus, type RunDetail } from "@/types/run.types";
+import { asInstant, type NodeRun, type NodeRunStatus } from "@/types/run.types";
 import { cn } from "@/lib/utils";
 
 /*
- * What the last run did, node by node.
- *
- * The backend records an output map and an error message per node specifically so a
- * run can be inspected; this is that surface. It shares the right-hand overlay with
- * the nodes catalog and the config panels.
+ * One node's slice of the last run — status, timing, error and output — shown
+ * inside that node's own tab instead of a separate scrolling list. Reads run
+ * state from `RunStatusContext` (the same source a node card's badge reads),
+ * so this needs nothing from its caller except which node and how to send a
+ * held-for-review email.
  */
-
-type RunPanelProps = {
-  detail: RunDetail | null;
-  error: string | null;
-  busy: boolean;
-  /** Canvas nodes, in order, so nodes the run never reached can be listed too. */
-  nodes: WorkflowNode[];
-  onClose: () => void;
-  /** Patches a node's row after the manual-review "Send" action settles its messages. */
-  onNodeUpdated: (updated: NodeRun) => void;
-};
-
-/** Canvas types that become a step the backend runs. Notes never do. */
-function isStep(node: WorkflowNode): boolean {
-  return node.type !== "stickyNote";
-}
 
 const STATUS_STYLE: Record<NodeRunStatus, string> = {
   SUCCESS: "text-run-success",
@@ -40,6 +32,14 @@ const STATUS_STYLE: Record<NodeRunStatus, string> = {
   RUNNING: "text-brand",
   PENDING: "text-muted-foreground",
   SKIPPED: "text-muted-foreground",
+};
+
+const STATUS_LABEL: Record<NodeRunStatus, string> = {
+  SUCCESS: "Succeeded",
+  FAILED: "Failed",
+  RUNNING: "Running",
+  PENDING: "Queued",
+  SKIPPED: "Skipped",
 };
 
 function StatusIcon({ status }: { status: NodeRunStatus }) {
@@ -112,6 +112,72 @@ function outputSummary(run: NodeRun): OutputSummary | null {
     messages: messages.filter(isOutputMessage),
     messagesTruncated: messagesTruncated === true,
   };
+}
+
+/** Rows a DATA_SOURCE node produces — always `Map.of("rows", rows)` on the wire. */
+type DatasourceRows = Record<string, unknown>[];
+
+const DATASOURCE_PREVIEW_ROWS = 8;
+
+/**
+ * Reads a DATA_SOURCE node's `rows` back out of the generic output map, or null if
+ * this isn't one (or the shape doesn't match) — the caller falls back to the raw
+ * JSON dump in that case.
+ */
+function datasourceRows(run: NodeRun): DatasourceRows | null {
+  if (run.nodeType !== "DATA_SOURCE" || run.output === null || typeof run.output === "string") {
+    return null;
+  }
+  const { rows } = run.output;
+  return Array.isArray(rows) ? (rows as DatasourceRows) : null;
+}
+
+function cellText(value: unknown): string {
+  if (value === null || value === undefined) return "—";
+  return typeof value === "string" ? value : JSON.stringify(value);
+}
+
+function DatasourceTable({ rows }: { rows: DatasourceRows }) {
+  if (rows.length === 0) {
+    return <p className="px-1 text-[11px] text-muted-foreground">No rows.</p>;
+  }
+
+  const columns = Object.keys(rows[0]);
+  const visible = rows.slice(0, DATASOURCE_PREVIEW_ROWS);
+
+  return (
+    <div className="flex flex-col gap-1.5">
+      <div className="nowheel max-h-64 overflow-auto rounded-md border">
+        <Table>
+          <TableHeader>
+            <TableRow className="bg-muted/50">
+              {columns.map((column) => (
+                <TableHead key={column} className="h-8 text-[11px]">
+                  {column}
+                </TableHead>
+              ))}
+            </TableRow>
+          </TableHeader>
+          <TableBody>
+            {visible.map((row, index) => (
+              <TableRow key={index} className="odd:bg-muted/20">
+                {columns.map((column) => (
+                  <TableCell key={column} className="max-w-40 truncate p-2 font-mono text-[11px]">
+                    {cellText(row[column])}
+                  </TableCell>
+                ))}
+              </TableRow>
+            ))}
+          </TableBody>
+        </Table>
+      </div>
+      {rows.length > visible.length && (
+        <p className="px-1 text-[11px] text-muted-foreground">
+          Showing {visible.length} of {rows.length} rows.
+        </p>
+      )}
+    </div>
+  );
 }
 
 function MessageStatusIcon({ status }: { status: OutputMessage["status"] }) {
@@ -226,140 +292,84 @@ function OutputMessages({ runId, nodeId, summary, onSent }: OutputMessagesProps)
   );
 }
 
-export function RunPanel({ detail, error, busy, nodes, onClose, onNodeUpdated }: RunPanelProps) {
-  const logged = new Map((detail?.nodes ?? []).map((run) => [run.nodeId, run]));
-  const steps = nodes.filter(isStep);
+type NodeResultProps = {
+  nodeId: string;
+  /** Null until a run has been started at least once this session. */
+  runId: number | null;
+  /** Patches a node's row after the manual-review "Send" action settles its messages. */
+  onNodeUpdated: (updated: NodeRun) => void;
+};
+
+/** This node's place in the last run — status, timing, error and output. */
+export function NodeResult({ nodeId, runId, onNodeUpdated }: NodeResultProps) {
+  const state = useNodeRun(nodeId);
+
+  if (!state) {
+    return (
+      <p className="px-1 text-[13px] leading-snug text-muted-foreground">Nothing has run yet.</p>
+    );
+  }
+
+  if (state.kind === "waiting") {
+    return (
+      <p className="flex items-center gap-1.5 px-1 text-[13px] leading-snug text-muted-foreground">
+        <Spinner className="size-3.5" />
+        Waiting for this step…
+      </p>
+    );
+  }
+
+  if (state.kind === "notReached") {
+    return (
+      <p className="flex items-center gap-1.5 px-1 text-[13px] leading-snug text-muted-foreground">
+        <Minus className="size-3.5" strokeWidth={2.5} />
+        Not reached — the run stopped at an earlier failure.
+      </p>
+    );
+  }
+
+  const { run } = state;
+  const elapsed = duration(run);
+  const summary = outputSummary(run);
+  const rows = datasourceRows(run);
 
   return (
-    <aside aria-label="Run" className="flex h-full min-w-0 flex-col border-l bg-background">
-      <header className="flex h-12 shrink-0 items-center justify-between gap-2 border-b px-3">
-        <div className="flex min-w-0 items-center gap-2">
-          <Play className="size-4 shrink-0 text-muted-foreground" strokeWidth={1.75} />
-          <h2 className="truncate text-sm font-semibold tracking-tight">Run</h2>
-          {detail && (
-            <span className="shrink-0 rounded-md border bg-muted/50 px-1.5 py-0.5 font-mono text-[11px] text-muted-foreground">
-              #{detail.runId}
-            </span>
-          )}
-        </div>
-        <Button
-          aria-label="Close run panel"
-          size="icon-sm"
-          variant="ghost"
-          className="text-muted-foreground hover:text-foreground"
-          onClick={onClose}
-        >
-          <X />
-        </Button>
-      </header>
-
-      <div className="flex min-h-0 flex-1 flex-col gap-3 overflow-y-auto px-3 py-3">
-        {detail && (
-          <p
-            className={cn(
-              "flex items-center gap-1.5 text-[13px] font-medium",
-              STATUS_STYLE[detail.status],
-            )}
-          >
-            <StatusIcon status={detail.status} />
-            {detail.status === "PENDING"
-              ? "Queued"
-              : detail.status === "RUNNING"
-                ? "Running"
-                : detail.status === "SUCCESS"
-                  ? "Finished"
-                  : "Failed"}
-          </p>
+    <div className="flex flex-col gap-1.5">
+      <div
+        className={cn(
+          "flex items-center gap-1.5 text-[12px] font-medium",
+          STATUS_STYLE[run.status],
         )}
-
-        {error && (
-          <p
-            role="alert"
-            className="rounded-lg border border-destructive/40 px-2.5 py-2 text-[12px] leading-snug text-destructive"
-          >
-            {error}
-          </p>
-        )}
-
-        {!detail && !error && (
-          <p className="px-1 text-[13px] leading-snug text-muted-foreground">
-            {busy ? "Starting…" : "Nothing has run yet."}
-          </p>
-        )}
-
-        {detail && (
-          <ul className="flex flex-col gap-1.5">
-            {steps.map((node) => {
-              const run = logged.get(node.id);
-
-              /*
-               * No log row means the node was never reached. Execution stops at the
-               * first failure, so everything after a failed node is absent from the
-               * response rather than marked — and while the run is still going, it
-               * simply hasn't got there yet.
-               */
-              if (!run) {
-                return (
-                  <li
-                    key={node.id}
-                    className="flex items-center gap-1.5 rounded-lg border border-dashed px-2.5 py-2 text-[12px] text-muted-foreground"
-                  >
-                    <Minus className="size-3.5 shrink-0" strokeWidth={2.5} />
-                    <span className="font-mono">{node.id}</span>
-                    <span className="ml-auto">{busy ? "waiting" : "not reached"}</span>
-                  </li>
-                );
-              }
-
-              const elapsed = duration(run);
-              const summary = outputSummary(run);
-
-              return (
-                <li key={node.id} className="flex flex-col gap-1.5 rounded-lg border px-2.5 py-2">
-                  <div
-                    className={cn(
-                      "flex items-center gap-1.5 text-[12px] font-medium",
-                      STATUS_STYLE[run.status],
-                    )}
-                  >
-                    <StatusIcon status={run.status} />
-                    <span className="font-mono">{run.nodeId}</span>
-                    <span className="truncate text-muted-foreground">{run.nodeType}</span>
-                    {elapsed && (
-                      <span className="ml-auto shrink-0 font-normal text-muted-foreground">
-                        {elapsed}
-                      </span>
-                    )}
-                  </div>
-
-                  {run.errorMessage && (
-                    <pre className="nowheel max-h-40 overflow-auto rounded-md bg-destructive/5 px-2 py-1.5 text-[11px] leading-relaxed whitespace-pre-wrap text-destructive">
-                      {run.errorMessage}
-                    </pre>
-                  )}
-
-                  {run.output !== null && summary && detail && (
-                    <OutputMessages
-                      runId={detail.runId}
-                      nodeId={run.nodeId}
-                      summary={summary}
-                      onSent={onNodeUpdated}
-                    />
-                  )}
-
-                  {run.output !== null && !summary && (
-                    <pre className="nowheel max-h-40 overflow-auto rounded-md bg-muted/50 px-2 py-1.5 font-mono text-[11px] leading-relaxed whitespace-pre-wrap text-muted-foreground">
-                      {typeof run.output === "string"
-                        ? run.output
-                        : JSON.stringify(run.output, null, 2)}
-                    </pre>
-                  )}
-                </li>
-              );
-            })}
-          </ul>
+      >
+        <StatusIcon status={run.status} />
+        <span>{STATUS_LABEL[run.status]}</span>
+        {elapsed && (
+          <span className="ml-auto shrink-0 font-normal text-muted-foreground">{elapsed}</span>
         )}
       </div>
-    </aside>
+
+      {run.errorMessage && (
+        <pre className="nowheel max-h-40 overflow-auto rounded-md bg-destructive/5 px-2 py-1.5 text-[11px] leading-relaxed whitespace-pre-wrap text-destructive">
+          {run.errorMessage}
+        </pre>
+      )}
+
+      {rows && <DatasourceTable rows={rows} />}
+
+      {!rows && run.output !== null && summary && runId !== null && (
+        <OutputMessages
+          runId={runId}
+          nodeId={run.nodeId}
+          summary={summary}
+          onSent={onNodeUpdated}
+        />
+      )}
+
+      {!rows && run.output !== null && !summary && (
+        <pre className="nowheel max-h-40 overflow-auto rounded-md bg-muted/50 px-2 py-1.5 font-mono text-[11px] leading-relaxed whitespace-pre-wrap text-muted-foreground">
+          {typeof run.output === "string" ? run.output : JSON.stringify(run.output, null, 2)}
+        </pre>
+      )}
+    </div>
   );
 }

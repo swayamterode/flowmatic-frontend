@@ -5,9 +5,9 @@ import { X, type LucideIcon } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
 /*
- * The frame every node config panel sits in: header, scrolling body, optional
- * footer note. Shaped like `nodes-panel.tsx` on purpose — both live in the same
- * right-hand overlay slot, so they should not disagree about how a panel looks.
+ * The frame every tab in the slide-out panel sits in: header, scrolling body,
+ * optional footer note. One shell for a node's own tab, the Run tab and the
+ * catalog tab alike, so they can't disagree about how a panel looks.
  */
 
 export const SECTION_LABEL =
@@ -15,7 +15,8 @@ export const SECTION_LABEL =
 
 type NodeEditorShellProps = {
   title: string;
-  nodeId: string;
+  /** A short tag next to the title — a node's id, a run's number, or nothing at all. */
+  badge?: React.ReactNode;
   Icon: LucideIcon;
   onClose: () => void;
   children: React.ReactNode;
@@ -25,7 +26,7 @@ type NodeEditorShellProps = {
 
 export function NodeEditorShell({
   title,
-  nodeId,
+  badge,
   Icon,
   onClose,
   children,
@@ -33,7 +34,7 @@ export function NodeEditorShell({
 }: NodeEditorShellProps) {
   return (
     <aside
-      aria-label={`${title} node settings`}
+      aria-label={`${title} settings`}
       className="flex h-full min-w-0 flex-col border-l bg-background"
       onKeyDown={(event) => {
         if (event.key !== "Escape") return;
@@ -50,13 +51,14 @@ export function NodeEditorShell({
         <div className="flex min-w-0 items-center gap-2">
           <Icon className="size-4 shrink-0 text-muted-foreground" strokeWidth={1.75} />
           <h2 className="truncate text-sm font-semibold tracking-tight">{title}</h2>
-          {/* The id is the root of every token this node produces, so it is worth showing. */}
-          <span className="shrink-0 rounded-md border bg-muted/50 px-1.5 py-0.5 font-mono text-[11px] text-muted-foreground">
-            {nodeId}
-          </span>
+          {badge && (
+            <span className="shrink-0 rounded-md border bg-muted/50 px-1.5 py-0.5 font-mono text-[11px] text-muted-foreground">
+              {badge}
+            </span>
+          )}
         </div>
         <Button
-          aria-label={`Close ${title} node settings`}
+          aria-label={`Close ${title}`}
           size="icon-sm"
           variant="ghost"
           className="text-muted-foreground hover:text-foreground"
