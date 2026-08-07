@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 
 import { RouteError, getRoute, postRoute } from "@/lib/api/route-client";
+import { useWorkflowUsage } from "@/components/workflow-usage-provider";
 import { isSettled, type NodeRun, type RunDetail, type RunSummary } from "@/types/run.types";
 
 /*
@@ -31,6 +32,7 @@ type WorkflowRunOptions = {
 };
 
 export function useWorkflowRun({ save }: WorkflowRunOptions) {
+  const { refresh: refreshUsage } = useWorkflowUsage();
   const [phase, setPhase] = useState<RunPhase>("idle");
   const [detail, setDetail] = useState<RunDetail | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -87,6 +89,7 @@ export function useWorkflowRun({ save }: WorkflowRunOptions) {
       if (mine !== ticket.current) return;
       setDetail({ ...queued, nodes: [] });
       setPhase("polling");
+      refreshUsage();
     } catch (cause) {
       if (mine !== ticket.current) return;
       setPhase("error");
@@ -125,7 +128,7 @@ export function useWorkflowRun({ save }: WorkflowRunOptions) {
         return;
       }
     }
-  }, [save]);
+  }, [save, refreshUsage]);
 
   const clear = useCallback(() => {
     ticket.current += 1;
