@@ -62,8 +62,8 @@ export function NavUser() {
             <div className="truncate text-xs text-muted-foreground">{user.email}</div>
           </div>
         </div>
-        <DropdownMenuSeparator />
-        <DropdownMenuGroup>
+        {/* <DropdownMenuSeparator /> */}
+        {/* <DropdownMenuGroup>
           <DropdownMenuItem>
             <UserIcon />
             Profile
@@ -97,7 +97,7 @@ export function NavUser() {
             <CreditCardIcon />
             Subscription
           </DropdownMenuItem>
-        </DropdownMenuGroup>
+        </DropdownMenuGroup> */}
         <DropdownMenuSeparator />
         <DropdownMenuGroup>
           <DropdownMenuItem

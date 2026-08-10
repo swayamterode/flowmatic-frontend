@@ -40,5 +40,13 @@ export const ENDPOINTS = {
     /** Starts a Stripe Checkout session for a plan. Answers `{ checkoutUrl }`. */
     CHECKOUT_SESSION: "/api/billing/checkout-session",
   },
+  DASHBOARD: {
+    /** Per-day execution counts for the trailing `days` window. */
+    executionsOverTime: (days: number) => `/api/dashboard/executions-over-time?days=${days}`,
+    /** Today's headline metrics with period-over-period deltas. */
+    SUMMARY: "/api/dashboard/summary",
+    /** Execution counts grouped by run status. */
+    EXECUTIONS_BY_STATUS: "/api/dashboard/executions-by-status",
+  },
   // add new modules here, grouped by domain
 } as const;

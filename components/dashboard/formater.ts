@@ -83,7 +83,7 @@ export function formatInteger(value: number) {
   }).format(value);
 }
 
-/** Percentage with fixed decimal places (e.g. conversion rate). */
-export function formatPercent(value: number, fractionDigits = 2) {
-  return `${value.toFixed(fractionDigits)}%`;
+/** Percentage with fixed decimal places (e.g. conversion rate). `null` (no data yet) renders as 0. */
+export function formatPercent(value: number | null, fractionDigits = 2) {
+  return `${(value ?? 0).toFixed(fractionDigits)}%`;
 }

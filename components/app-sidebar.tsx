@@ -41,7 +41,7 @@ export function AppSidebar() {
               <PlusIcon />
               <span>Create Workflow</span>
             </SidebarMenuButton>
-            <Button
+            {/* <Button
               aria-label="Search workflows"
               className="size-8 group-data-[collapsible=icon]:opacity-0"
               size="icon"
@@ -49,7 +49,7 @@ export function AppSidebar() {
             >
               <SearchIcon />
               <span className="sr-only">Search workflows</span>
-            </Button>
+            </Button> */}
           </SidebarMenuItem>
         </SidebarGroup>
         {navGroups.map((group, index) => (

@@ -16,7 +16,7 @@ export default function DocsIndexPage() {
 
       <div className="grid gap-4 sm:grid-cols-2">
         {DOC_TOPICS.map((topic) => (
-          <Link className="group" key={topic.slug} href={`/docs/${topic.slug}`}>
+          <Link className="group" key={topic.slug} href={`/documentation/${topic.slug}`}>
             <Card className="h-full gap-3 py-4 shadow-none transition-colors hover:border-brand/40 dark:ring-0">
               <div className="flex items-start justify-between gap-3 px-4">
                 <span className="flex size-9 shrink-0 items-center justify-center rounded-md border bg-card text-muted-foreground transition-colors group-hover:border-brand/40 group-hover:text-brand [&_svg]:size-4">
