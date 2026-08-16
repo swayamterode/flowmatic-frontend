@@ -4,6 +4,7 @@ import { cn } from "@/lib/utils";
 import { type ComponentProps, useEffect, useState } from "react";
 import { RotateCwIcon, TriangleAlertIcon } from "lucide-react";
 import { LabelList, Pie, PieChart } from "recharts";
+import { dashboardCardFrame } from "@/components/dashboard/card-frame";
 import { formatInteger } from "@/components/dashboard/formater";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -31,19 +32,19 @@ const chartConfig = {
   },
   PENDING: {
     label: "Pending",
-    color: "var(--muted-foreground)",
+    color: "color-mix(in oklch, var(--foreground) 45%, var(--card))",
   },
   RUNNING: {
     label: "Running",
-    color: "var(--brand)",
+    color: "color-mix(in oklch, var(--foreground) 62%, var(--card))",
   },
   SUCCESS: {
     label: "Success",
-    color: "var(--run-success)",
+    color: "color-mix(in oklch, var(--foreground) 79%, var(--card))",
   },
   FAILED: {
     label: "Failed",
-    color: "var(--destructive)",
+    color: "color-mix(in oklch, var(--foreground) 96%, var(--card))",
   },
 } satisfies ChartConfig;
 
@@ -83,7 +84,7 @@ export function ExecutionsByStatusChart({ className, ...props }: ComponentProps<
     .map((row) => ({ ...row, fill: `var(--color-${row.status})` }));
 
   return (
-    <Card className={cn("flex flex-col shadow-none dark:ring-0", className)} {...props}>
+    <Card className={cn(dashboardCardFrame, "flex flex-col", className)} size="sm" {...props}>
       <CardHeader className="items-center space-y-1 pb-0 sm:items-start">
         <CardTitle>Executions by status</CardTitle>
         <CardDescription>Runs grouped by outcome</CardDescription>
@@ -125,7 +126,7 @@ export function ExecutionsByStatusChart({ className, ...props }: ComponentProps<
                 nameKey="status"
                 outerRadius="88%"
                 stroke="var(--card)"
-                strokeWidth={4}
+                strokeWidth={2}
               >
                 <LabelList
                   className="fill-background font-medium"

@@ -2,11 +2,20 @@
 
 import { cn } from "@/lib/utils";
 import { useEffect, useState } from "react";
-import { RotateCwIcon, TriangleAlertIcon } from "lucide-react";
+import {
+  ClockIcon,
+  CircleCheckIcon,
+  CircleXIcon,
+  RotateCwIcon,
+  TriangleAlertIcon,
+  ZapIcon,
+} from "lucide-react";
+import { dashboardCardFrame } from "@/components/dashboard/card-frame";
 import { Delta, DeltaIcon, DeltaValue } from "@/components/dashboard/delta";
 import { formatInteger, formatPercent } from "@/components/dashboard/formater";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
+
 import {
   Empty,
   EmptyContent,
@@ -18,22 +27,28 @@ import {
 import { Skeleton } from "@/components/ui/skeleton";
 import { RouteError, getRoute } from "@/lib/api/route-client";
 import type { DashboardSummary } from "@/types/dashboard.types";
+import type { ComponentType, SVGProps } from "react";
 
 type Stat = {
   label: string;
+  icon: ComponentType<SVGProps<SVGSVGElement>>;
   value: string;
   delta: number | null;
-  /** Unit appended to the delta, e.g. percentage points for a rate. */
   deltaSuffix?: string;
   footnote: string;
-  /** When true, a negative delta is treated as favorable (e.g. failed runs, run duration). */
   lowerIsBetter: boolean;
 };
+
+const statsPanelGrid = cn(
+  "grid grid-cols-1 gap-0 divide-y divide-border p-0",
+  "lg:grid-cols-4 lg:divide-x lg:divide-y-0",
+);
 
 function buildStats(summary: DashboardSummary): readonly Stat[] {
   return [
     {
       label: "Executions today",
+      icon: ZapIcon,
       value: formatInteger(summary.executionsToday),
       delta: summary.executionsTodayDeltaPct,
       footnote: "vs yesterday",
@@ -41,6 +56,7 @@ function buildStats(summary: DashboardSummary): readonly Stat[] {
     },
     {
       label: "Success rate",
+      icon: CircleCheckIcon,
       value: formatPercent(summary.successRatePct, 1),
       delta: summary.successRateDeltaPp,
       deltaSuffix: "pp",
@@ -49,6 +65,7 @@ function buildStats(summary: DashboardSummary): readonly Stat[] {
     },
     {
       label: "Failed runs",
+      icon: CircleXIcon,
       value: formatInteger(summary.failedRuns),
       delta: summary.failedRunsDeltaPct,
       footnote: "vs yesterday",
@@ -56,6 +73,7 @@ function buildStats(summary: DashboardSummary): readonly Stat[] {
     },
     {
       label: "Median run time",
+      icon: ClockIcon,
       value: `${(summary.medianRunTimeSeconds ?? 0).toFixed(1)}s`,
       delta: summary.medianRunTimeDeltaPct,
       footnote: "vs last week",
@@ -91,7 +109,7 @@ export function DashboardStats() {
 
   if (error) {
     return (
-      <Card className={cn("shadow-none sm:col-span-2 lg:col-span-4 dark:ring-0")}>
+      <Card className={cn(dashboardCardFrame, "sm:col-span-2 lg:col-span-4")}>
         <CardContent>
           <Empty role="alert">
             <EmptyHeader>
@@ -115,43 +133,45 @@ export function DashboardStats() {
 
   if (!summary) {
     return (
-      <>
+      <Card className={cn(dashboardCardFrame, statsPanelGrid, "sm:col-span-2 lg:col-span-4")}>
         {Array.from({ length: 4 }, (_, index) => (
-          <Card className={cn("shadow-none dark:ring-0")} key={index}>
-            <CardHeader>
+          <div className="flex flex-col gap-3 p-4 sm:p-5" key={index}>
+            <div className="flex items-center justify-between gap-2">
               <Skeleton className="h-4 w-24" />
-            </CardHeader>
-            <CardContent className="flex flex-col gap-2">
+              <Skeleton className="h-4 w-12" />
+            </div>
+            <div className="flex flex-col gap-1.5">
               <Skeleton className="h-8 w-20" />
               <Skeleton className="h-4 w-28" />
-            </CardContent>
-          </Card>
+            </div>
+          </div>
         ))}
-      </>
+      </Card>
     );
   }
 
   return (
-    <>
+    <Card className={cn(dashboardCardFrame, statsPanelGrid, "sm:col-span-2 lg:col-span-4")}>
       {buildStats(summary).map((s) => (
-        <Card className={cn("shadow-none dark:ring-0")} key={s.label}>
-          <CardHeader>
-            <CardTitle className="text-xs font-normal text-muted-foreground">{s.label}</CardTitle>
-          </CardHeader>
-          <CardContent className="flex flex-col gap-2">
-            <p className="text-2xl font-semibold tabular-nums">{s.value}</p>
+        <div className="flex flex-col gap-3 p-4 sm:p-5" key={s.label}>
+          <div className="flex items-center justify-between gap-2">
+            <div className="flex items-center gap-1.5 text-xs font-normal tracking-wide text-muted-foreground">
+              <s.icon className="size-3.5" />
+              {s.label}
+            </div>
             {s.delta !== null && (
-              <div className="flex items-center gap-1 text-xs">
-                <Delta polarity={s.lowerIsBetter ? "inverse" : "normal"} value={s.delta}>
-                  <DeltaIcon />
-                  <DeltaValue suffix={s.deltaSuffix} />
-                </Delta>
-                <span className="text-muted-foreground">{s.footnote}</span>
-              </div>
+              <Delta polarity={s.lowerIsBetter ? "inverse" : "normal"} value={s.delta}>
+                <DeltaIcon filled variant="arrow" />
+                <DeltaValue suffix={s.deltaSuffix} />
+              </Delta>
             )}
-          </CardContent>
-        </Card>
+          </div>
+          <div className="flex flex-col gap-1">
+            <p className="text-2xl font-semibold tabular-nums">{s.value}</p>
+            <p className="text-xs text-muted-foreground">{s.footnote}</p>
+          </div>
+        </div>
       ))}
-    </>
+    </Card>
   );
 }

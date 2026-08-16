@@ -185,7 +185,7 @@ export function WorkflowList() {
         </Button>
       </div>
 
-      <Card className="gap-0 py-0 shadow-none dark:ring-0">
+      <Card className="gap-0 py-0 shadow-none">
         {/* Nothing to search means nothing to show here — an empty state reads better on its own. */}
         {workflows === null || (!error && total > 0) ? (
           <CardHeader className="flex flex-row items-center justify-between gap-3 border-b pt-(--card-spacing)">

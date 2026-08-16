@@ -1,10 +1,10 @@
 import { cn } from "@/lib/utils";
-import { BrandMark } from "@/components/auth/brand-mark";
+import { DecorCorners } from "@/components/auth/decor-icon";
 
 /**
- * Auth page frame: mark, title and subtitle sit above a plain white card that
- * holds nothing but the form; the switch-page link sits below it. Keeping the
- * header outside the card is what leaves the card itself uncluttered.
+ * Auth page frame: a bordered card whose hairline frame and corner accents
+ * carry the whole page's identity, so title, form and footer link all live
+ * inside it rather than a separate header above.
  */
 export function AuthCard({
   title,
@@ -20,20 +20,31 @@ export function AuthCard({
   className?: string;
 }) {
   return (
-    <div className={cn("auth-rise", className)}>
-      <div className="flex flex-col items-center text-center">
-        <BrandMark />
-        <h1 className="mt-6 text-2xl font-semibold tracking-tight text-balance">{title}</h1>
-        {subtitle ? (
-          <p className="mt-2 text-sm leading-relaxed text-balance text-muted-foreground">
-            {subtitle}
-          </p>
-        ) : null}
+    <div
+      className={cn(
+        "auth-rise relative w-full p-6 md:p-8",
+        "dark:bg-[radial-gradient(50%_80%_at_20%_0%,--theme(--color-foreground/.1),transparent)]",
+        className,
+      )}
+    >
+      <div className="absolute -inset-y-6 -left-px w-px bg-border" />
+      <div className="absolute -inset-y-6 -right-px w-px bg-border" />
+      <div className="absolute -inset-x-6 -top-px h-px bg-border" />
+      <div className="absolute -inset-x-6 -bottom-px h-px bg-border" />
+      <DecorCorners variant="diagonal" />
+
+      <div className="space-y-8">
+        <div className="flex flex-col space-y-1">
+          <h1 className="text-2xl font-bold tracking-wide text-balance">{title}</h1>
+          {subtitle ? (
+            <p className="text-base text-balance text-muted-foreground">{subtitle}</p>
+          ) : null}
+        </div>
+
+        <div>{children}</div>
+
+        {footer ? <p className="text-sm text-muted-foreground">{footer}</p> : null}
       </div>
-
-      <div className="mt-8 rounded-xl border bg-card p-6 shadow-xs sm:p-7">{children}</div>
-
-      {footer ? <p className="mt-6 text-center text-sm text-muted-foreground">{footer}</p> : null}
     </div>
   );
 }

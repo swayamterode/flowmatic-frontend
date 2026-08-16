@@ -23,18 +23,19 @@ type DeltaPolarity = "normal" | "inverse";
 
 type DeltaContextValue = {
   value: number;
+  isFavorable: boolean;
 };
 
 const DeltaContext = React.createContext<DeltaContextValue | null>(null);
 
-function useDeltaValue() {
+function useDelta() {
   const context = React.useContext(DeltaContext);
 
   if (!context) {
     throw new Error("DeltaIcon and DeltaValue must be used inside a `Delta` component.");
   }
 
-  return context.value;
+  return context;
 }
 
 function Delta({
@@ -51,7 +52,7 @@ function Delta({
   const isFavorable = polarity === "inverse" ? value < 0 : value > 0;
 
   return (
-    <DeltaContext.Provider value={{ value }}>
+    <DeltaContext.Provider value={{ value, isFavorable }}>
       {variant === "badge" ? (
         <Badge
           className={cn(
@@ -80,14 +81,22 @@ function Delta({
   );
 }
 
-function FilledShell({ value, children }: { value: number; children: React.ReactNode }) {
+function FilledShell({
+  value,
+  isFavorable,
+  children,
+}: {
+  value: number;
+  isFavorable: boolean;
+  children: React.ReactNode;
+}) {
   return (
     <span
       className={cn(
         "inline-flex size-3 shrink-0 items-center justify-center rounded-full",
         "[&_svg]:size-2! [&_svg]:shrink-0 [&_svg]:stroke-3! [&_svg]:text-background",
-        value > 0 && "bg-emerald-500",
-        value < 0 && "bg-red-500",
+        value !== 0 && isFavorable && "bg-emerald-500",
+        value !== 0 && !isFavorable && "bg-red-500",
         (!value || value === 0) && "bg-muted-foreground",
       )}
       data-slot="delta-icon"
@@ -106,12 +115,18 @@ function DeltaIcon({
   variant?: DeltaIconVariant;
   filled?: boolean;
 }) {
-  const resolvedValue = useDeltaValue();
+  const { value: resolvedValue, isFavorable } = useDelta();
 
   const mergedClassName = cn(className);
 
   const shell = (node: React.ReactElement) =>
-    filled ? <FilledShell value={resolvedValue}>{node}</FilledShell> : node;
+    filled ? (
+      <FilledShell isFavorable={isFavorable} value={resolvedValue}>
+        {node}
+      </FilledShell>
+    ) : (
+      node
+    );
 
   const slotProps = filled ? {} : { "data-slot": "delta-icon" as const };
 
@@ -153,7 +168,7 @@ function DeltaValue({
   suffix?: string;
   absolute?: boolean;
 }) {
-  const resolvedValue = useDeltaValue();
+  const { value: resolvedValue } = useDelta();
 
   const formattedValue = (absolute ? Math.abs(resolvedValue) : resolvedValue).toFixed(precision);
 

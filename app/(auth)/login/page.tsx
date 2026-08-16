@@ -73,7 +73,7 @@ export default function LoginPage() {
           type="email"
           label="Email"
           autoComplete="email"
-          placeholder="you@company.com"
+          placeholder="Enter your Email"
           value={email}
           error={errors.email}
           disabled={loading}
@@ -85,7 +85,7 @@ export default function LoginPage() {
           <PasswordInput
             id="password"
             autoComplete="current-password"
-            placeholder="Your password"
+            placeholder="Enter your password"
             value={password}
             aria-invalid={!!errors.password}
             disabled={loading}

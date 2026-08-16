@@ -4,6 +4,7 @@ import { cn } from "@/lib/utils";
 import { type ComponentProps, useEffect, useId, useState } from "react";
 import { RotateCwIcon, TriangleAlertIcon } from "lucide-react";
 import { Area, AreaChart, CartesianGrid, XAxis, YAxis } from "recharts";
+import { dashboardCardFrame } from "@/components/dashboard/card-frame";
 import {
   formatChartAxisTick,
   formatChartTooltipDate,
@@ -97,23 +98,24 @@ export function ExecutionsOverTimeChart({ className, ...props }: ComponentProps<
 
   return (
     <Card
-      className={cn("shadow-none md:col-span-2 lg:col-span-3 dark:ring-0", className)}
+      className={cn(dashboardCardFrame, "md:col-span-2 lg:col-span-3", className)}
+      size="sm"
       {...props}
     >
       <CardHeader className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-        <div className="min-w-0 space-y-2">
+        <div className="min-w-0 space-y-1">
           <CardTitle>Executions over time</CardTitle>
           <CardDescription>Workflow runs per day.</CardDescription>
         </div>
-        <Select onValueChange={changeRange} value={String(periodDays)}>
+        <Select onValueChange={changeRange} value={"Days: " + String(periodDays)}>
           <SelectTrigger
             aria-label="Executions time range"
-            className="w-full min-w-36 sm:w-fit"
+            className="w-full min-w-20 sm:w-fit"
             size="sm"
           >
             <SelectValue placeholder="Range" />
           </SelectTrigger>
-          <SelectContent align="end">
+          <SelectContent align="start">
             <SelectItem value="7">Last 7 days</SelectItem>
             <SelectItem value="30">Last 30 days</SelectItem>
             <SelectItem value="60">Last 60 days</SelectItem>
@@ -194,7 +196,7 @@ export function ExecutionsOverTimeChart({ className, ...props }: ComponentProps<
                 fill={`url(#${idAreaGradient})`}
                 stroke="var(--color-executions)"
                 strokeWidth={2}
-                type="natural"
+                type="monotone"
               />
             </AreaChart>
           </ChartContainer>

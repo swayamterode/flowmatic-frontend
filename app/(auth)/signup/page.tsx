@@ -72,7 +72,7 @@ export default function SignupPage() {
           id="fullName"
           label="Full name"
           autoComplete="name"
-          placeholder="Ada Lovelace"
+          placeholder="Enter you full name"
           value={fullName}
           error={errors.fullName}
           disabled={loading}
@@ -84,7 +84,7 @@ export default function SignupPage() {
           type="email"
           label="Email"
           autoComplete="email"
-          placeholder="you@company.com"
+          placeholder="Enter you email"
           value={email}
           error={errors.email}
           disabled={loading}
@@ -96,7 +96,7 @@ export default function SignupPage() {
           <PasswordInput
             id="password"
             autoComplete="new-password"
-            placeholder="At least 8 characters"
+            placeholder="At least 8 characters of password"
             value={password}
             aria-invalid={!!errors.password}
             disabled={loading}
@@ -105,7 +105,7 @@ export default function SignupPage() {
           {errors.password ? (
             <FieldError>{errors.password}</FieldError>
           ) : (
-            <FieldDescription>Use 8–72 characters.</FieldDescription>
+            <FieldDescription>Use 8 to 72 characters.</FieldDescription>
           )}
         </Field>
 

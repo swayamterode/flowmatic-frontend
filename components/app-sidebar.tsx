@@ -1,7 +1,6 @@
 "use client";
 
 import { LogoIcon } from "@/components/logo";
-import { Button } from "@/components/ui/button";
 import {
   Sidebar,
   SidebarContent,
@@ -16,7 +15,7 @@ import { NavGroup } from "@/components/nav-group";
 import { footerNavLinks, navGroups } from "@/components/app-shared";
 import { LatestChange } from "@/components/latest-change";
 import { useActiveNavPath } from "@/hooks/use-active-nav";
-import { PlusIcon, SearchIcon } from "lucide-react";
+import { PlusIcon } from "lucide-react";
 import Link from "next/link";
 
 export function AppSidebar() {
