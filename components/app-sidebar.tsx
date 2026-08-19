@@ -17,6 +17,7 @@ import { LatestChange } from "@/components/latest-change";
 import { useActiveNavPath } from "@/hooks/use-active-nav";
 import { PlusIcon } from "lucide-react";
 import Link from "next/link";
+import Image from "next/image";
 
 export function AppSidebar() {
   const activePath = useActiveNavPath();
@@ -25,7 +26,15 @@ export function AppSidebar() {
     <Sidebar collapsible="icon" variant="inset">
       <SidebarHeader className="h-14 justify-center">
         <SidebarMenuButton render={<a href="#link" />}>
-          <LogoIcon />
+          <Link className="rounded-md p-2 hover:bg-muted dark:hover:bg-muted/50" href="/">
+            <Image
+              src={"/logo.png"}
+              alt="flowmatic"
+              width={24}
+              height={24}
+              className="rounded-full invert dark:invert-0"
+            />
+          </Link>
           <span className="font-medium">Flowmatic</span>
         </SidebarMenuButton>
       </SidebarHeader>
